@@ -1,0 +1,31 @@
+# Source files (only ship built files)
+src/
+tests/
+examples/
+src/generated/
+
+# Configuration files
+.eslintrc.json
+.prettierrc.json
+.prettierignore
+jest.config.js
+tsconfig*.json
+.husky/
+
+# Development files
+*.log
+.DS_Store
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Documentation source
+BUILD_PLAN.md
+SPECIFICATION.md
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/

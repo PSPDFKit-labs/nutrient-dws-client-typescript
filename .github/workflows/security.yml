@@ -1,0 +1,82 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  secret-scanning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      continue-on-error: true
+      
+    - name: Check for hardcoded secrets
+      run: |
+        echo "🔍 Scanning for hardcoded secrets..."
+        
+        # Check for potential API keys
+        if grep -r "pdf_live_" --include="*.ts" --include="*.js" --include="*.json" --exclude-dir=node_modules --exclude-dir=dist . 2>/dev/null; then
+          echo "❌ Found hardcoded API keys!"
+          exit 1
+        fi
+        
+        # Check for base64 encoded secrets
+        if grep -r "cGRmX2xpdmVf" --include="*.ts" --include="*.js" --include="*.json" --exclude-dir=node_modules --exclude-dir=dist . 2>/dev/null; then
+          echo "❌ Found base64 encoded API keys!"
+          exit 1
+        fi
+        
+        # Check for other common secret patterns
+        if grep -rE "(sk_|pk_|nutr_sk_)" --include="*.ts" --include="*.js" --include="*.json" --exclude-dir=node_modules --exclude-dir=dist . 2>/dev/null; then
+          echo "❌ Found potential secret keys!"
+          exit 1
+        fi
+        
+        echo "✅ No hardcoded secrets found"
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run npm audit
+      run: |
+        echo "🔍 Running npm audit..."
+        npm audit --production --audit-level=moderate || echo "⚠️ Audit found issues but continuing..."
+      continue-on-error: true
+    
+    - name: Run Snyk Security Scan
+      uses: snyk/actions/node@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+      if: env.SNYK_TOKEN != ''
