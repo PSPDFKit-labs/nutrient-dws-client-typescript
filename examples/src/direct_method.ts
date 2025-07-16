@@ -5,7 +5,7 @@
  * with direct method calls for document processing operations.
  */
 
-import { NutrientClient } from 'nutrient-dws-client-typescript';
+import { NutrientClient } from '@nutrient-sdk/dws-client-typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';

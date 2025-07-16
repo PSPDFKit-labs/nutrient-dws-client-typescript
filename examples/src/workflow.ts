@@ -5,7 +5,7 @@
  * with the workflow builder pattern for document processing operations.
  */
 
-import { NutrientClient, BuildActions } from 'nutrient-dws-client-typescript';
+import { NutrientClient, BuildActions } from '@nutrient-sdk/dws-client-typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';

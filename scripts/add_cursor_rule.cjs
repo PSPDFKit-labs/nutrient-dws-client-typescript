@@ -16,7 +16,7 @@ const relativeTypePath = path.relative(userProjectRoot, typePath);
 try {
   const rule = `
 ---
-description: This rule explains how to use the Nutrient DWS TypeScript Client for operations with document processing operations including conversion, merging, compression, watermarking, signage, and text extraction.
+description: This rule explains how to use the Nutrient DWS TypeScript Client (\`@nutrient-sdk/dws-client-typescript\`) for operations with document processing operations including conversion, merging, compression, watermarking, signage, and text extraction.
 globs: 
 alwaysApply: false
 ---

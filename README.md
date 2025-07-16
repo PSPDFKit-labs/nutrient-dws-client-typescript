@@ -8,7 +8,7 @@
 
 A Node.js TypeScript client library for [Nutrient Document Web Services (DWS) API](https://nutrient.io/). This library provides a type-safe and ergonomic interface for document processing operations including conversion, merging, compression, watermarking, and text extraction.
 
-> **Note**: This package is published as `nutrient-dws-client-typescript` on NPM. The package provides full TypeScript support and is designed specifically for Node.js environments.
+> **Note**: This package is published as `@nutrient-sdk/dws-client-typescript` on NPM. The package provides full TypeScript support and is designed specifically for Node.js environments.
 
 ## Features
 
@@ -25,13 +25,13 @@ A Node.js TypeScript client library for [Nutrient Document Web Services (DWS) AP
 ## Installation
 
 ```bash
-npm install nutrient-dws-client-typescript
+npm install @nutrient-sdk/dws-client-typescript
 ```
 
 or
 
 ```bash
-yarn add nutrient-dws-client-typescript
+yarn add @nutrient-sdk/dws-client-typescript
 ```
 
 ## Integration with Coding Agents
@@ -147,7 +147,7 @@ import {
   APIError,
   AuthenticationError,
   NetworkError
-} from 'nutrient-dws-client-typescript';
+} from '@nutrient-sdk/dws-client-typescript';
 
 try {
   const result = await client.convert('file.docx', 'pdf');
