@@ -761,7 +761,7 @@ import {
   APIError,
   AuthenticationError,
   NetworkError
-} from 'nutrient-dws-client-typescript';
+} from '@nutrient-sdk/dws-client-typescript';
 
 try {
   const result = await client.convert('file.docx', 'pdf');

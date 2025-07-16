@@ -1,7 +1,7 @@
 {
   "name": "nutrient-dws-client-typescript-example",
   "version": "1.0.0",
-  "description": "Example project for nutrient-dws-client-typescript",
+  "description": "Example project for @nutrient-sdk/dws-client-typescript",
   "main": "dist/index.js",
   "scripts": {
     "start:direct": "tsx src/direct_method.ts",
@@ -10,7 +10,7 @@
   "private": true,
   "dependencies": {
     "dotenv": "^17.0.0",
-    "nutrient-dws-client-typescript": "file:../nutrient-dws-client-typescript-1.0.0.tgz"
+    "@nutrient-sdk/dws-client-typescript": "file:../nutrient-sdk-dws-client-typescript-1.0.0.tgz"
   },
   "devDependencies": {
     "@types/node": "^24.0.7",
