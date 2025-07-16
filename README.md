@@ -1,6 +1,6 @@
 # Nutrient DWS TypeScript Client
 
-[![npm version](https://badge.fury.io/js/nutrient-dws-client-typescript.svg)](https://badge.fury.io/js/nutrient-dws-client-typescript)
+[![npm](https://img.shields.io/npm/v/%40nutrient-sdk/dws-client-typescript)](https://www.npmjs.com/package/@nutrient-sdk/dws-client-typescript)
 [![CI](https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/actions/workflows/ci.yml)
 [![Integration Tests](https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/actions/workflows/integration-tests.yml)
 [![Security](https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/actions/workflows/security.yml/badge.svg)](https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/actions/workflows/security.yml)
