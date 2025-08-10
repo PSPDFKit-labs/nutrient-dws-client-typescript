@@ -116,6 +116,7 @@ describe('HTTP Layer', () => {
           url: 'https://api.test.com/v1/account/info',
           headers: {
             Authorization: 'Bearer test-api-key',
+            'User-Agent': expect.stringMatching(/^nutrient-dws-client-typescript\/\d+\.\d+\.\d+$/),
           },
         }),
       );
@@ -566,6 +567,39 @@ describe('HTTP Layer', () => {
           url: 'https://api.nutrient.io/account/info',
         }),
       );
+    });
+
+    it('should include User-Agent header in all requests', async () => {
+      const mockResponse = {
+        data: { result: 'success' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      };
+
+      mockedAxios.mockResolvedValueOnce(mockResponse);
+
+      const config: RequestConfig<'GET', '/account/info'> = {
+        endpoint: '/account/info',
+        method: 'GET',
+        data: undefined,
+      };
+
+      await sendRequest(config, mockClientOptions, 'json');
+
+      expect(mockedAxios).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'User-Agent': expect.stringMatching(/^nutrient-dws-client-typescript\/\d+\.\d+\.\d+$/),
+          }),
+        }),
+      );
+
+      // Verify the User-Agent format is correct
+      const mockCalls = (mockedAxios as jest.Mock).mock.calls as unknown[][];
+      const firstCallArgs = mockCalls[0] as [{ headers?: { 'User-Agent'?: string } }];
+      const userAgent = firstCallArgs[0]?.headers?.['User-Agent'];
+      expect(userAgent).toMatch(/^nutrient-dws-client-typescript\/\d+\.\d+\.\d+$/);
     });
   });
 });

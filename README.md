@@ -25,13 +25,13 @@ A Node.js TypeScript client library for [Nutrient Document Web Services (DWS) AP
 ## Installation
 
 ```bash
-npm install nutrient-dws-client-typescript
+npm install @nutrient-sdk/dws-client-typescript
 ```
 
 or
 
 ```bash
-yarn add nutrient-dws-client-typescript
+yarn add @nutrient-sdk/dws-client-typescript
 ```
 
 ## Integration with Coding Agents
@@ -147,7 +147,7 @@ import {
   APIError,
   AuthenticationError,
   NetworkError
-} from 'nutrient-dws-client-typescript';
+} from '@nutrient-sdk/dws-client-typescript';
 
 try {
   const result = await client.convert('file.docx', 'pdf');
