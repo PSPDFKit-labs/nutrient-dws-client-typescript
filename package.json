@@ -90,7 +90,7 @@
   },
   "dependencies": {
     "axios": "^1.10.0",
-    "form-data": "^4.0.3"
+    "form-data": "^4.0.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
