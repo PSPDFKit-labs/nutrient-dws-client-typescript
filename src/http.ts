@@ -10,6 +10,7 @@ import {
 } from './errors';
 import type { NutrientClientOptions } from './types';
 import type { Methods, Endpoints, RequestConfig, ApiResponse, ResponseTypeMap } from './types';
+import { getUserAgent } from './utils';
 
 /**
  * Sends HTTP request to Nutrient DWS Processor API
@@ -34,6 +35,7 @@ export async function sendRequest<Method extends Methods, Endpoint extends Endpo
       url,
       headers: {
         Authorization: `Bearer ${apiKey}`,
+        'User-Agent': getUserAgent(),
         ...config.headers,
       },
       timeout: clientOptions.timeout ?? 0, // No default timeout

@@ -47,3 +47,4 @@ export {
   type NormalizedFileData,
 } from './inputs';
 export { type ActionWithFileInput } from './build';
+export { getLibraryVersion, getUserAgent } from './utils';
