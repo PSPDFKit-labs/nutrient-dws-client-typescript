@@ -220,7 +220,7 @@ Widget C | 60 | 70 | 80 | 90`;
    */
   static generateXfdf(
     annotations: Array<{
-      type: 'highlight' | 'text' | 'ink' | 'square' | 'circle';
+      type: 'highlight' | 'text' | 'square' | 'circle';
       page: number;
       rect: number[];
       content?: string;
