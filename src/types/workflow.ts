@@ -78,7 +78,7 @@ export interface WorkflowWithPartsStage extends WorkflowInitialStage {
     options?: Omit<components['schemas']['PDFAOutput'], 'type'>,
   ): WorkflowWithOutputStage<'pdfa'>;
   outputPdfUA(
-    options?: Omit<components['schemas']['PDFAOutput'], 'type'>,
+    options?: Omit<components['schemas']['PDFUAOutput'], 'type'>,
   ): WorkflowWithOutputStage<'pdfua'>;
   outputImage<T extends 'png' | 'jpeg' | 'jpg' | 'webp'>(
     format: T,

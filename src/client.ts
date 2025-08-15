@@ -153,8 +153,7 @@ export class NutrientClient {
    * @example
    * ```typescript
    * const token = await client.createToken({
-   *   name: 'My API Token',
-   *   expiresIn: '30d'
+   *   expirationTime: 3600
    * });
    * console.log(token.id);
    * ```
