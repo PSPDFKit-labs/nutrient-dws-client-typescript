@@ -11,7 +11,13 @@ import { NutrientClient } from '../client';
 import { BuildActions } from '../build';
 import type { NutrientClientOptions, OutputTypeMap } from '../types';
 import 'dotenv/config';
-import { ResultValidator, sampleDOCX, samplePDF, samplePNG, TestDocumentGenerator } from './helpers';
+import {
+  ResultValidator,
+  sampleDOCX,
+  samplePDF,
+  samplePNG,
+  TestDocumentGenerator,
+} from './helpers';
 import { getPdfPageCount, processFileInput } from '../inputs';
 
 // Skip integration tests in CI/automated environments unless explicitly enabled with valid API key
@@ -317,13 +323,15 @@ describeIntegration('Integration Tests with Live API - Direct Methods', () => {
     it('should handle network timeouts', async () => {
       const timeoutClient = new NutrientClient({
         apiKey: process.env['NUTRIENT_API_KEY'] ?? '',
-        timeout: 1
-      })
+        timeout: 1,
+      });
 
-      await expect(timeoutClient.convert(sampleDOCX, 'pdf')).rejects.toThrow('Network request failed');
+      await expect(timeoutClient.convert(sampleDOCX, 'pdf')).rejects.toThrow(
+        'Network request failed',
+      );
     }, 15000);
   });
-})
+});
 
 describeIntegration('Integration Tests with Live API- Workflow', () => {
   let client: NutrientClient;

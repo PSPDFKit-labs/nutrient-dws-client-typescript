@@ -8,6 +8,9 @@ import packageJson from '../../package.json';
  * @returns The version string from package.json
  */
 export function getLibraryVersion(): string {
+  if (process.env['NODE_ENV'] === 'development') {
+    return '0.0.0-dev';
+  }
   return packageJson.version;
 }
 

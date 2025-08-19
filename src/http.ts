@@ -324,7 +324,7 @@ function convertError<Method extends Methods, Endpoint extends Endpoints<Method>
     if (request) {
       const sanitizedHeaders = config.headers;
       if (sanitizedHeaders) {
-        delete sanitizedHeaders['Authorization']
+        delete sanitizedHeaders['Authorization'];
       }
       // Network error (request made but no response)
       return new NetworkError('Network request failed', {
@@ -336,7 +336,8 @@ function convertError<Method extends Methods, Endpoint extends Endpoints<Method>
     }
 
     // Request setup error
-    return new ValidationError('Request configuration error', { message,
+    return new ValidationError('Request configuration error', {
+      message,
       endpoint: config.endpoint,
       method: config.method,
       data: config.data,
