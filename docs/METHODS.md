@@ -50,7 +50,6 @@ Gets account information for the current API key.
 
 ```typescript
 const accountInfo = await client.getAccountInfo();
-console.log(accountInfo.organization);
 
 // Access subscription information
 console.log(accountInfo.subscriptionType);
@@ -66,8 +65,7 @@ Creates a new authentication token.
 
 ```typescript
 const token = await client.createToken({
-  name: 'My API Token',
-  expiresIn: '30d'
+  expirationTime: 3600
 });
 console.log(token.id);
 
