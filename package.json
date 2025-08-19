@@ -63,10 +63,9 @@
     "dist",
     "scripts",
     "README.md",
-    "CONTRIBUTING.md",
-    "WORKFLOW.md",
-    "METHODS.md",
-    "README.md",
+    "docs/CONTRIBUTING.md",
+    "docs/WORKFLOW.md",
+    "docs/METHODS.md",
     "LLM_DOC.md",
     "LICENSE"
   ],

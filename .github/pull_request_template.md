@@ -72,4 +72,4 @@ Relates to #
 
 ---
 
-**Reviewer Note**: Please ensure this PR follows our [Contributing Guidelines](../CONTRIBUTING.md) and meets all code review criteria.
+**Reviewer Note**: Please ensure this PR follows our [Contributing Guidelines](../docs/CONTRIBUTING.md) and meets all code review criteria.
