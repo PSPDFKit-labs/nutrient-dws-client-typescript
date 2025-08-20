@@ -19,6 +19,28 @@ Options:
 - `baseUrl` (optional): Custom API base URL (defaults to `https://api.nutrient.io`)
 - `timeout` (optional): Request timeout in milliseconds
 
+#### Authentication
+
+Provide your API key directly:
+
+```typescript
+const client = new NutrientClient({
+  apiKey: 'nutr_sk_your_secret_key'
+});
+```
+
+Or use an async token provider to fetch tokens from a secure source:
+
+```typescript
+const client = new NutrientClient({
+  apiKey: async () => {
+    const response = await fetch('/api/get-nutrient-token');
+    const { token } = await response.json();
+    return token;
+  }
+});
+```
+
 #### Account Methods
 
 ##### getAccountInfo()

@@ -2,7 +2,7 @@ name: Security Checks
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
   schedule:
@@ -14,19 +14,19 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+
     - name: Run Gitleaks
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
       continue-on-error: true
-      
+
     - name: Check for hardcoded secrets
       run: |
         echo "🔍 Scanning for hardcoded secrets..."
@@ -53,25 +53,25 @@ jobs:
 
   dependency-check:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
-    
+
     - name: Install dependencies
       run: npm ci
-    
+
     - name: Run npm audit
       run: |
         echo "🔍 Running npm audit..."
         npm audit --production --audit-level=moderate || echo "⚠️ Audit found issues but continuing..."
       continue-on-error: true
-    
+
     - name: Run Snyk Security Scan
       uses: snyk/actions/node@master
       continue-on-error: true

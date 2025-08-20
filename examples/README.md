@@ -98,5 +98,5 @@ All processed files will be saved to the `output/` directory. You can examine th
 For more information about the Nutrient DWS TypeScript Client, refer to:
 
 - [README.md](../README.md) - Main documentation
-- [METHODS.md](../METHODS.md) - Direct methods documentation
-- [WORKFLOW.md](../WORKFLOW.md) - Workflow system documentation
+- [METHODS.md](../docs/METHODS.md) - Direct methods documentation
+- [WORKFLOW.md](../docs/WORKFLOW.md) - Workflow system documentation

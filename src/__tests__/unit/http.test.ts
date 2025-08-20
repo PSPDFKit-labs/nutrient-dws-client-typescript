@@ -376,7 +376,7 @@ describe('HTTP Layer', () => {
       try {
         await errorPromise;
       } catch (error) {
-        console.error(error)
+        console.error(error);
         thrownError = error as NetworkError;
       }
 
@@ -596,10 +596,12 @@ describe('HTTP Layer', () => {
       );
 
       // Verify the User-Agent format is correct
-      const mockCalls = (mockedAxios as jest.Mock).mock.calls as unknown[][];
+      const mockCalls = (mockedAxios as unknown as jest.Mock).mock.calls as unknown[][];
       const firstCallArgs = mockCalls[0] as [{ headers?: { 'User-Agent'?: string } }];
       const userAgent = firstCallArgs[0]?.headers?.['User-Agent'];
-      expect(userAgent).toMatch(/^nutrient-dws-client-typescript\/\d+\.\d+\.\d+$/);
+      expect(userAgent).toMatch(
+        /^nutrient-dws-client-typescript\/\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/,
+      );
     });
   });
 });

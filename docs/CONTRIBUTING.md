@@ -1,6 +1,6 @@
 # Contributing to Nutrient DWS TypeScript Client
 
-Thank you for your interest in contributing to the Nutrient DWS TypeScript Client! This document provides a quick overview of our development standards and practices. For more detailed information about the library itself, please refer to the [README](./README.md), [Methods Documentation](./METHODS.md), and [Workflow Documentation](./WORKFLOW.md).
+Thank you for your interest in contributing to the Nutrient DWS TypeScript Client! This document provides a quick overview of our development standards and practices. For more detailed information about the library itself, please refer to the [README](../README.md), [Methods Documentation](METHODS.md), and [Workflow Documentation](WORKFLOW.md).
 
 ## Development Standards
 

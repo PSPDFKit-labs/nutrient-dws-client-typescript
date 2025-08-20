@@ -59,29 +59,9 @@ The documentation for Nutrient DWS TypeScript Client is also available on [Conte
 
 ## Quick Start
 
-## Authentication
-
-### Direct API Key
-
-Provide your API key directly:
-
 ```typescript
 const client = new NutrientClient({
   apiKey: 'nutr_sk_your_secret_key'
-});
-```
-
-### Token Provider
-
-Use an async token provider to fetch tokens from a secure source:
-
-```typescript
-const client = new NutrientClient({
-  apiKey: async () => {
-    const response = await fetch('/api/get-nutrient-token');
-    const { token } = await response.json();
-    return token;
-  }
 });
 ```
 
@@ -103,7 +83,7 @@ const watermarkedDoc = await client.watermarkText('document.pdf', 'CONFIDENTIAL'
 const mergedPdf = await client.merge(['doc1.pdf', 'doc2.pdf', 'doc3.pdf']);
 ```
 
-For a complete list of available methods with examples, see the [Methods Documentation](./METHODS.md).
+For a complete list of available methods with examples, see the [Methods Documentation](docs/METHODS.md).
 
 
 ## Workflow System
@@ -134,7 +114,7 @@ The workflow system follows a staged approach:
 3. Set output format
 4. Execute or perform a dry run
 
-For detailed information about the workflow system, including examples and best practices, see the [Workflow Documentation](./WORKFLOW.md).
+For detailed information about the workflow system, including examples and best practices, see the [Workflow Documentation](docs/WORKFLOW.md).
 
 ## Error Handling
 
@@ -201,7 +181,7 @@ Quick start for contributors:
 3. Use conventional commits for clear change history
 4. Include appropriate tests for new features
 
-For detailed contribution guidelines, see the [Contributing Guide](./CONTRIBUTING.md).
+For detailed contribution guidelines, see the [Contributing Guide](docs/CONTRIBUTING.md).
 
 ## Project Structure
 

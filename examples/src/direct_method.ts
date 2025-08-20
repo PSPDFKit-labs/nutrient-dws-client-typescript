@@ -1,6 +1,6 @@
 /**
  * Direct Method Example
- * 
+ *
  * This example demonstrates how to use the Nutrient DWS TypeScript Client
  * with direct method calls for document processing operations.
  */
@@ -126,38 +126,7 @@ async function mergeDocuments() {
   }
 }
 
-// Example 5: Process sample.pdf directly
-async function processSamplePdf() {
-  console.log('\nExample 5: Processing sample.pdf directly');
 
-  try {
-    const pdfPath = path.join(assetsDir, 'sample.pdf');
-
-    // Extract text from sample.pdf
-    const extractResult = await client.extractText(pdfPath);
-    const extractOutputPath = path.join(outputDir, 'sample-pdf-extracted-text.json');
-    fs.writeFileSync(extractOutputPath, JSON.stringify(extractResult.data, null, 2));
-
-    const waterMarkImagePath = path.join(assetsDir, 'sample.png')
-
-    // Add watermark to sample.pdf
-    const watermarkResult = await client.watermarkImage(pdfPath, waterMarkImagePath, {
-      opacity: 0.4,
-    });
-
-    const watermarkOutputPath = path.join(outputDir, 'sample-pdf-watermarked.pdf');
-    fs.writeFileSync(watermarkOutputPath, Buffer.from(watermarkResult.buffer));
-
-    console.log(`Sample PDF processing successful.`);
-    console.log(`Extracted text saved to: ${extractOutputPath}`);
-    console.log(`Watermarked PDF saved to: ${watermarkOutputPath}`);
-
-    return watermarkOutputPath;
-  } catch (error) {
-    console.error('Sample PDF processing failed:', error);
-    throw error;
-  }
-}
 
 // Run all examples
 async function runExamples() {
@@ -169,7 +138,6 @@ async function runExamples() {
     await extractText(convertedPdfPath);
     await addWatermark(convertedPdfPath);
     await mergeDocuments();
-    await processSamplePdf();
 
     console.log('\nAll examples completed successfully!');
   } catch (error) {

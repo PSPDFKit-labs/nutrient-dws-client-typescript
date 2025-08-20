@@ -1,6 +1,6 @@
 /**
  * Workflow Example
- * 
+ *
  * This example demonstrates how to use the Nutrient DWS TypeScript Client
  * with the workflow builder pattern for document processing operations.
  */
@@ -132,7 +132,7 @@ async function complexWorkflow() {
       .addFilePart(pdfPath)
       .addFilePart(pngPath)
       .applyActions([
-        BuildActions.watermarkText('DRAFT', { 
+        BuildActions.watermarkText('DRAFT', {
           opacity: 0.3,
           fontSize: 36,
           fontColor: '#0000FF'
@@ -163,36 +163,6 @@ async function complexWorkflow() {
   }
 }
 
-// Example 5: Using sample.pdf directly
-async function samplePdfWorkflow() {
-  console.log('\nExample 5: Using sample.pdf directly');
-
-  try {
-    const pdfPath = path.join(assetsDir, 'sample.pdf');
-
-    const result = await client
-      .workflow()
-      .addFilePart(pdfPath)
-      .applyAction(BuildActions.watermarkText('SAMPLE PDF', {
-        opacity: 0.4,
-        fontSize: 42,
-        fontColor: '#008000'
-      }))
-      .outputPdf()
-      .execute();
-
-    // Save the result to the output directory
-    const outputPath = path.join(outputDir, 'workflow-sample-pdf-processed.pdf');
-    fs.writeFileSync(outputPath, Buffer.from(result.output!.buffer));
-
-    console.log(`Sample PDF workflow successful. Output saved to: ${outputPath}`);
-    return outputPath;
-  } catch (error) {
-    console.error('Sample PDF workflow failed:', error);
-    throw error;
-  }
-}
-
 // Run all examples
 async function runExamples() {
   try {
@@ -203,7 +173,6 @@ async function runExamples() {
     await mergeWithWatermarkWorkflow();
     await extractTextWorkflow(convertedPdfPath);
     await complexWorkflow();
-    await samplePdfWorkflow();
 
     console.log('\nAll workflow examples completed successfully!');
   } catch (error) {
