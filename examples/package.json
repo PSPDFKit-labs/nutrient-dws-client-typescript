@@ -10,7 +10,7 @@
   "private": true,
   "dependencies": {
     "dotenv": "^17.0.0",
-    "@nutrient-sdk/dws-client-typescript": "file:../nutrient-sdk-dws-client-typescript-1.0.0.tgz"
+    "@nutrient-sdk/dws-client-typescript": "file:../nutrient-sdk-dws-client-typescript-1.0.1.tgz"
   },
   "devDependencies": {
     "@types/node": "^24.0.7",
