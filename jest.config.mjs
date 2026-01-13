@@ -12,7 +12,9 @@ export default {
     '!src/**/*.d.ts',
     '!src/**/index.ts',
     '!src/**/__tests__/**',
+    '!src/generated/**',
   ],
+  coverageProvider: 'v8',
   coverageThreshold: {
     global: {
       branches: 70,
