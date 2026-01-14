@@ -146,15 +146,39 @@ export function isRemoteFileInput(input: FileInput): input is UrlInput | string 
 
 /**
  * Process Remote File Input
+ *
+ * @param input - URL input to process
+ * @param allowUrlFetch - Whether URL fetching is allowed (default: false for SSRF protection)
+ * @throws {ValidationError} If allowUrlFetch is false (SSRF protection)
  */
 export async function processRemoteFileInput(
   input: UrlInput | string,
+  allowUrlFetch: boolean = false,
 ): Promise<NormalizedFileData> {
   let url: string;
   if (typeof input === 'string') {
     url = input;
   } else {
     url = input.url;
+  }
+
+  // SSRF Protection: Require explicit opt-in for URL fetching
+  if (!allowUrlFetch) {
+    throw new ValidationError(
+      'URL fetching is disabled by default for security (SSRF protection). ' +
+        'To fetch content from URLs, set `allowUrlFetch: true` in client options. ' +
+        'Only enable this if you trust the URL sources.',
+      { url },
+    );
+  }
+
+  // Basic URL validation - ensure it's http/https
+  const parsedUrl = new URL(url);
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new ValidationError(
+      `Invalid URL protocol: ${parsedUrl.protocol}. Only http: and https: protocols are allowed.`,
+      { url },
+    );
   }
 
   const buffer = await fetchFromUrl(url);

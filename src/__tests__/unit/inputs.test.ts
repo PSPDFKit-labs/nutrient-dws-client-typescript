@@ -235,14 +235,40 @@ describe('Input Processing (Node.js only)', () => {
       (fetch as jest.Mock).mockClear();
     });
 
-    it('should process URL string input', async () => {
+    describe('SSRF Protection', () => {
+      it('should throw ValidationError when allowUrlFetch is false (default)', async () => {
+        await expect(processRemoteFileInput('https://example.com/test.pdf')).rejects.toThrow(
+          ValidationError,
+        );
+        await expect(
+          processRemoteFileInput('https://example.com/test.pdf'),
+        ).rejects.toThrow(/SSRF protection/);
+      });
+
+      it('should throw ValidationError when allowUrlFetch is explicitly false', async () => {
+        await expect(
+          processRemoteFileInput('https://example.com/test.pdf', false),
+        ).rejects.toThrow(ValidationError);
+      });
+
+      it('should throw ValidationError for non-http/https protocols', async () => {
+        await expect(
+          processRemoteFileInput('file:///etc/passwd', true),
+        ).rejects.toThrow(/Invalid URL protocol/);
+        await expect(
+          processRemoteFileInput('ftp://example.com/file.pdf', true),
+        ).rejects.toThrow(/Invalid URL protocol/);
+      });
+    });
+
+    it('should process URL string input when allowUrlFetch is true', async () => {
       const mockResponse = {
         ok: true,
         arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(10)),
       };
       (fetch as jest.Mock).mockResolvedValue(mockResponse);
 
-      const result = await processRemoteFileInput('https://example.com/test.pdf');
+      const result = await processRemoteFileInput('https://example.com/test.pdf', true);
 
       expect(fetch).toHaveBeenCalledWith('https://example.com/test.pdf');
       expect(mockResponse.arrayBuffer).toHaveBeenCalled();
@@ -253,7 +279,7 @@ describe('Input Processing (Node.js only)', () => {
       });
     });
 
-    it('should process URL object input', async () => {
+    it('should process URL object input when allowUrlFetch is true', async () => {
       const mockResponse = {
         ok: true,
         arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(10)),
@@ -263,7 +289,7 @@ describe('Input Processing (Node.js only)', () => {
       const result = await processRemoteFileInput({
         type: 'url',
         url: 'https://example.com/test.pdf',
-      });
+      }, true);
 
       expect(fetch).toHaveBeenCalledWith('https://example.com/test.pdf');
       expect(mockResponse.arrayBuffer).toHaveBeenCalled();
@@ -282,7 +308,7 @@ describe('Input Processing (Node.js only)', () => {
       };
       (fetch as jest.Mock).mockResolvedValue(mockResponse);
 
-      await expect(processRemoteFileInput('https://example.com/test.pdf')).rejects.toThrow(
+      await expect(processRemoteFileInput('https://example.com/test.pdf', true)).rejects.toThrow(
         ValidationError,
       );
     });
@@ -290,7 +316,7 @@ describe('Input Processing (Node.js only)', () => {
     it('should throw ValidationError when fetch fails', async () => {
       (fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      await expect(processRemoteFileInput('https://example.com/test.pdf')).rejects.toThrow(
+      await expect(processRemoteFileInput('https://example.com/test.pdf', true)).rejects.toThrow(
         ValidationError,
       );
     });

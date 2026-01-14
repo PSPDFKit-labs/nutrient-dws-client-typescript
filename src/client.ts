@@ -118,6 +118,22 @@ export class NutrientClient {
   }
 
   /**
+   * Normalizes a file input, handling both local files and URLs.
+   * URL fetching requires `allowUrlFetch: true` in client options.
+   *
+   * @param input - The file input to normalize
+   * @returns Normalized file data
+   * @throws {ValidationError} If input is a URL and allowUrlFetch is false
+   * @private
+   */
+  private async normalizeFileInput(input: FileInput): Promise<NormalizedFileData> {
+    if (isRemoteFileInput(input)) {
+      return processRemoteFileInput(input, this.options.allowUrlFetch ?? false);
+    }
+    return processFileInput(input);
+  }
+
+  /**
    * Gets account information for the current API key
    *
    * @returns Promise resolving to account information
@@ -292,9 +308,7 @@ export class NutrientClient {
     },
   ): Promise<OutputTypeMap['pdf']> {
     // Normalize the file input
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -305,15 +319,11 @@ export class NutrientClient {
     let normalizedGraphicImage: NormalizedFileData | undefined;
 
     if (options?.image) {
-      normalizedImage = isRemoteFileInput(options.image)
-        ? await processRemoteFileInput(options.image)
-        : await processFileInput(options.image);
+      normalizedImage = await this.normalizeFileInput(options.image);
     }
 
     if (options?.graphicImage) {
-      normalizedGraphicImage = isRemoteFileInput(options.graphicImage)
-        ? await processRemoteFileInput(options.graphicImage)
-        : await processFileInput(options.graphicImage);
+      normalizedGraphicImage = await this.normalizeFileInput(options.graphicImage);
     }
 
     const response = await sendRequest(
@@ -816,9 +826,7 @@ export class NutrientClient {
     pdf: FileInput,
     metadata: components['schemas']['Metadata'],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -858,9 +866,7 @@ export class NutrientClient {
     pdf: FileInput,
     labels: components['schemas']['Label'][],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -897,9 +903,7 @@ export class NutrientClient {
     pdf: FileInput,
     instantJsonFile: FileInput,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -951,9 +955,7 @@ export class NutrientClient {
       richTextEnabled?: boolean;
     },
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1029,9 +1031,7 @@ export class NutrientClient {
     pages?: { start?: number; end?: number },
     options?: components['schemas']['RedactData']['options'],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1128,9 +1128,7 @@ export class NutrientClient {
       'type' | 'strategyOptions' | 'strategy'
     >,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1214,9 +1212,7 @@ export class NutrientClient {
       'type' | 'strategyOptions' | 'strategy'
     >,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1301,9 +1297,7 @@ export class NutrientClient {
       'type' | 'strategyOptions' | 'strategy'
     >,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1359,9 +1353,7 @@ export class NutrientClient {
   async applyRedactions(pdf: FileInput): Promise<OutputTypeMap['pdf']> {
     const applyRedactionsAction = BuildActions.applyRedactions();
 
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1405,9 +1397,7 @@ export class NutrientClient {
     pdf: FileInput,
     annotationIds?: (string | number)[],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1465,9 +1455,7 @@ export class NutrientClient {
     const rotateAction = BuildActions.rotate(angle);
     const workflow = this.workflow();
 
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1531,9 +1519,7 @@ export class NutrientClient {
   async addPage(pdf: FileInput, count: number = 1, index?: number): Promise<OutputTypeMap['pdf']> {
     let result: WorkflowResult;
 
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1658,9 +1644,7 @@ export class NutrientClient {
       throw new ValidationError('At least one page range is required for splitting');
     }
 
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1727,9 +1711,7 @@ export class NutrientClient {
       throw new ValidationError('At least one page index is required for duplication');
     }
 
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1803,9 +1785,7 @@ export class NutrientClient {
       throw new ValidationError('At least one page index is required for deletion');
     }
 
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });
@@ -1886,9 +1866,7 @@ export class NutrientClient {
     pdf: FileInput,
     options: components['schemas']['OptimizePdf'] = { imageOptimizationQuality: 2 },
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = isRemoteFileInput(pdf)
-      ? await processRemoteFileInput(pdf)
-      : await processFileInput(pdf);
+    const normalizedFile = await this.normalizeFileInput(pdf);
 
     if (!(await isValidPdf(normalizedFile))) {
       throw new ValidationError('Invalid pdf file', { input: pdf });

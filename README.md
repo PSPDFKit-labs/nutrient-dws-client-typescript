@@ -60,10 +60,28 @@ The documentation for Nutrient DWS TypeScript Client is also available on [Conte
 ## Quick Start
 
 ```typescript
+import { NutrientClient } from '@nutrient-sdk/dws-client-typescript';
+
 const client = new NutrientClient({
   apiKey: 'nutr_sk_your_secret_key'
 });
 ```
+
+### URL Fetching (SSRF Protection)
+
+By default, the SDK blocks automatic fetching of content from URLs to protect against Server-Side Request Forgery (SSRF) attacks. To enable URL fetching for trusted sources:
+
+```typescript
+const client = new NutrientClient({
+  apiKey: 'nutr_sk_your_secret_key',
+  allowUrlFetch: true  // Enable URL fetching (use with caution)
+});
+
+// Now you can pass URLs directly
+const result = await client.convert('https://trusted-source.com/document.pdf', 'pdf');
+```
+
+**⚠️ Security Warning:** Only enable `allowUrlFetch` if you control the URLs being processed. Never enable it when processing untrusted user input.
 
 ## Direct Methods
 

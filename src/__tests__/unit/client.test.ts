@@ -239,6 +239,71 @@ describe('NutrientClient', () => {
           }),
       ).toThrow('Base URL must be a string');
     });
+
+    it('should accept allowUrlFetch option', () => {
+      const clientWithUrlFetch = new NutrientClient({
+        apiKey: 'test-key',
+        allowUrlFetch: true,
+      });
+      expect(clientWithUrlFetch).toBeDefined();
+
+      const clientWithoutUrlFetch = new NutrientClient({
+        apiKey: 'test-key',
+        allowUrlFetch: false,
+      });
+      expect(clientWithoutUrlFetch).toBeDefined();
+    });
+  });
+
+  describe('SSRF Protection', () => {
+    let client: NutrientClient;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should pass allowUrlFetch=false to processRemoteFileInput by default', async () => {
+      (inputsModule.isRemoteFileInput as jest.Mock).mockReturnValue(true);
+      (inputsModule.processRemoteFileInput as jest.Mock).mockRejectedValue(
+        new ValidationError('SSRF protection: URL fetching disabled'),
+      );
+
+      client = new NutrientClient({
+        apiKey: 'test-key',
+      });
+
+      await expect(client.sign('https://example.com/test.pdf')).rejects.toThrow(
+        /SSRF protection/,
+      );
+      expect(inputsModule.processRemoteFileInput).toHaveBeenCalledWith(
+        'https://example.com/test.pdf',
+        false,
+      );
+    });
+
+    it('should pass allowUrlFetch=true when configured', async () => {
+      const mockBuffer = TestDocumentGenerator.generateSimplePdf('Test');
+      (inputsModule.isRemoteFileInput as jest.Mock).mockReturnValue(true);
+      (inputsModule.processRemoteFileInput as jest.Mock).mockResolvedValue({
+        data: mockBuffer,
+        filename: 'test.pdf',
+      });
+      (inputsModule.isValidPdf as jest.Mock).mockResolvedValue(true);
+      (httpModule.sendRequest as jest.Mock).mockResolvedValue({
+        data: mockBuffer,
+      });
+
+      client = new NutrientClient({
+        apiKey: 'test-key',
+        allowUrlFetch: true,
+      });
+
+      await client.sign('https://example.com/test.pdf');
+      expect(inputsModule.processRemoteFileInput).toHaveBeenCalledWith(
+        'https://example.com/test.pdf',
+        true,
+      );
+    });
   });
 
   describe('workflow()', () => {
