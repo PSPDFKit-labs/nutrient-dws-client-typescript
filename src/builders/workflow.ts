@@ -3,7 +3,6 @@ import type {
   FileInputWithUrl,
   OutputTypeMap,
   TypedWorkflowResult,
-  UrlInput,
   WorkflowDryRunResult,
   WorkflowExecuteOptions,
   WorkflowOutput,
@@ -13,7 +12,7 @@ import { BuildOutputs } from '../build';
 import { BaseBuilder } from './base';
 import { NutrientError, ValidationError } from '../errors';
 import type { NormalizedFileData } from '../inputs';
-import { isRemoteFileInput, processFileInput, validateFileInput } from '../inputs';
+import { getRemoteUrl, isRemoteFileInput, processFileInput, validateFileInput } from '../inputs';
 import type { components } from '../generated/api-types';
 import type { ResponseType } from 'axios';
 
@@ -32,23 +31,32 @@ export class WorkflowBuilder<
     parts: [],
   };
 
-  private assets: Map<string, Exclude<FileInput, UrlInput>> = new Map();
+  private assets: Map<string, FileInput> = new Map();
   private assetIndex = 0;
   private currentStep = 0;
   private isExecuted = false;
 
   /**
-   * Registers an asset in the workflow and returns its key for use in actions
-   * @param asset - The asset to register
-   * @returns The asset key that can be used in BuildActions
+   * Registers an asset in the workflow and returns its file handle for use in actions.
+   * For URL inputs, returns a URL file handle directly.
+   * For local files, registers the asset and returns the asset key.
+   * @param asset - The asset to register (local file or URL)
+   * @returns The file handle that can be used in BuildActions
    */
-  private registerAssets(asset: FileInput): string {
+  private registerAssets(asset: FileInputWithUrl): components['schemas']['FileHandle'] {
     if (!validateFileInput(asset)) {
       throw new ValidationError('Invalid file input provided to workflow', { asset });
     }
 
+    // Handle URL inputs - return URL file handle directly
+    const remoteUrl = getRemoteUrl(asset);
+    if (remoteUrl !== null) {
+      return { url: remoteUrl };
+    }
+
+    // Handle local files - register in assets map
     const assetKey = `asset_${this.assetIndex++}`;
-    this.assets.set(assetKey, asset);
+    this.assets.set(assetKey, asset as FileInput);
 
     return assetKey;
   }
@@ -63,13 +71,7 @@ export class WorkflowBuilder<
   ): this {
     this.ensureNotExecuted();
 
-    let fileField: components['schemas']['FileHandle'];
-    if (isRemoteFileInput(file)) {
-      const url = typeof file === 'string' ? file : (file as UrlInput).url;
-      fileField = { url };
-    } else {
-      fileField = this.registerAssets(file as FileInput);
-    }
+    const fileField = this.registerAssets(file);
 
     const processedActions = actions
       ? actions.map((action) => this.processAction(action))
@@ -96,20 +98,18 @@ export class WorkflowBuilder<
   ): this {
     this.ensureNotExecuted();
 
-    let htmlField: components['schemas']['FileHandle'];
-    if (isRemoteFileInput(html)) {
-      const url = typeof html === 'string' ? html : (html as UrlInput).url;
-      htmlField = { url };
-    } else {
-      htmlField = this.registerAssets(html as FileInput);
-    }
+    const htmlField = this.registerAssets(html);
 
     let assetsField: string[] | undefined;
     if (assets) {
       assetsField = [];
       for (const asset of assets) {
-        const asset_key = this.registerAssets(asset);
-        assetsField.push(asset_key);
+        // Validate upfront: HTML assets must be local files, not URLs
+        if (isRemoteFileInput(asset)) {
+          throw new ValidationError('HTML assets must be local files, not URLs', { asset });
+        }
+        // Since we validated it's not a URL, registerAssets will return a string key
+        assetsField.push(this.registerAssets(asset) as string);
       }
     }
 

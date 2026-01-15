@@ -1,4 +1,4 @@
-import { isRemoteFileInput, processFileInput, validateFileInput } from '../../inputs';
+import { getRemoteUrl, isRemoteFileInput, processFileInput, validateFileInput } from '../../inputs';
 import { ValidationError } from '../../errors';
 import { Readable } from 'stream';
 import fs from 'fs';
@@ -186,6 +186,42 @@ describe('Input Processing (Node.js only)', () => {
 
     it.each(cases)('should return $expected for $name', (testCase) => {
       expect(isRemoteFileInput(testCase.input as FileInput)).toBe(testCase.expected);
+    });
+  });
+
+  describe('getRemoteUrl', () => {
+    it('should extract URL from URL string', () => {
+      const url = 'https://example.com/test.pdf';
+      expect(getRemoteUrl(url)).toBe(url);
+    });
+
+    it('should return null for file path string', () => {
+      expect(getRemoteUrl('test.pdf')).toBeNull();
+    });
+
+    it('should extract URL from UrlInput object', () => {
+      const urlInput = { type: 'url' as const, url: 'https://example.com/test.pdf' };
+      expect(getRemoteUrl(urlInput)).toBe('https://example.com/test.pdf');
+    });
+
+    it('should return null for Buffer', () => {
+      expect(getRemoteUrl(Buffer.from('test'))).toBeNull();
+    });
+
+    it('should return null for Uint8Array', () => {
+      expect(getRemoteUrl(new Uint8Array([1, 2, 3]))).toBeNull();
+    });
+
+    it('should return null for FilePathInput', () => {
+      expect(getRemoteUrl({ type: 'file-path', path: 'test.pdf' })).toBeNull();
+    });
+
+    it('should return null for BufferInput', () => {
+      expect(getRemoteUrl({ type: 'buffer', buffer: Buffer.from('test'), filename: 'test.pdf' })).toBeNull();
+    });
+
+    it('should return null for Uint8ArrayInput', () => {
+      expect(getRemoteUrl({ type: 'uint8array', data: new Uint8Array([1, 2, 3]), filename: 'test.bin' })).toBeNull();
     });
   });
 

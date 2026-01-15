@@ -140,3 +140,20 @@ export function isRemoteFileInput(input: FileInputWithUrl): boolean {
 
   return typeof input === 'object' && input !== null && 'type' in input && input.type === 'url';
 }
+
+/**
+ * Extracts the URL from a remote file input, if it is one.
+ * Returns null if the input is not a remote file (URL).
+ * This avoids unsafe type assertions by handling both string URLs and UrlInput objects.
+ */
+export function getRemoteUrl(input: FileInputWithUrl): string | null {
+  if (typeof input === 'string') {
+    return isUrl(input) ? input : null;
+  }
+
+  if (typeof input === 'object' && input !== null && 'type' in input && input.type === 'url') {
+    return input.url;
+  }
+
+  return null;
+}
