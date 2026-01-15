@@ -1731,7 +1731,8 @@ export class NutrientClient {
     // Determine the end boundary for positive ranges:
     // - If we have negative deletes (e.g., -3), positive ranges must end before them (at -4)
     // - If no negative deletes, positive ranges extend to end of document (-1)
-    const endBoundary = negativeDeletes.length > 0 ? negativeDeletes[0]! - 1 : -1;
+    const firstNegativeDelete = negativeDeletes[0];
+    const endBoundary = firstNegativeDelete !== undefined ? firstNegativeDelete - 1 : -1;
 
     // Build keep ranges from positive deletions
     // Walk through sorted positive indices and create ranges for gaps
@@ -1751,9 +1752,9 @@ export class NutrientClient {
     // e.g., if deleting [-3, -1], there's a gap at -2 we need to keep
     // Negative indices are sorted ascending: [-3, -2, -1] so we look for gaps
     for (let i = 0; i < negativeDeletes.length - 1; i++) {
-      const current = negativeDeletes[i]!;
-      const next = negativeDeletes[i + 1]!;
-      if (next - current > 1) {
+      const current = negativeDeletes[i];
+      const next = negativeDeletes[i + 1];
+      if (current !== undefined && next !== undefined && next - current > 1) {
         // There's a gap between these negative indices (e.g., -3 to -1 has gap at -2)
         keepRanges.push({ start: current + 1, end: next - 1 });
       }
