@@ -33,16 +33,22 @@ export interface UrlInput {
 }
 
 /**
- * Union type for all possible file inputs (Node.js only)
+ * Union type for local file inputs (Node.js only).
+ * Does not include URLs - for URL support, use the workflow builder.
  */
 export type FileInput =
   | FilePathInput
   | BufferInput
   | Uint8ArrayInput
-  | UrlInput
   | Buffer // Node.js Buffer
   | Uint8Array // Raw binary data
-  | string; // File path or URL
+  | string; // File path
+
+/**
+ * File input that also accepts URLs (for workflow builder).
+ * URLs are passed directly to the server for fetching.
+ */
+export type FileInputWithUrl = FileInput | UrlInput;
 
 /**
  * Type guard to check if input is a Buffer

@@ -60,9 +60,38 @@ The documentation for Nutrient DWS TypeScript Client is also available on [Conte
 ## Quick Start
 
 ```typescript
+import { NutrientClient } from '@nutrient-sdk/dws-client-typescript';
+
 const client = new NutrientClient({
   apiKey: 'nutr_sk_your_secret_key'
 });
+```
+
+### Working with URLs
+
+Most methods accept URLs directly. The URL is passed to the server, which fetches the content—this avoids SSRF vulnerabilities since the client never fetches URLs itself.
+
+```typescript
+// Pass URL as a string
+const result = await client.convert('https://example.com/document.pdf', 'docx');
+
+// Or as an object (useful for TypeScript type narrowing)
+const result = await client.convert({ type: 'url', url: 'https://example.com/document.pdf' }, 'docx');
+
+// URLs also work with the workflow builder
+const result = await client.workflow()
+  .addFilePart('https://example.com/document.pdf')
+  .outputPdf()
+  .execute();
+```
+
+**Exception:** The `sign()` method only accepts local files (file paths, Buffers, streams) because the underlying API endpoint doesn't support URL inputs. For signing remote files, fetch the content first:
+
+```typescript
+// Fetch and pass the bytes for signing
+const response = await fetch('https://example.com/document.pdf');
+const buffer = Buffer.from(await response.arrayBuffer());
+const result = await client.sign(buffer, { /* signature options */ });
 ```
 
 ## Direct Methods

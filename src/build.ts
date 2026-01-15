@@ -1,16 +1,17 @@
 import type { components } from './generated/api-types';
-import type { FileInput } from './types';
+import type { FileInputWithUrl } from './types';
 
 const DEFAULT_DIMENSION = { value: 100, unit: '%' as const };
 
 /**
- * Internal action type that holds FileInput for deferred registration
+ * Internal action type that holds FileInput for deferred registration.
+ * Supports both local files and URLs.
  */
 export interface ActionWithFileInput<
   Action extends components['schemas']['BuildAction'] = components['schemas']['BuildAction'],
 > {
   __needsFileRegistration: true;
-  fileInput: FileInput;
+  fileInput: FileInputWithUrl;
   createAction: (fileHandle: components['schemas']['FileHandle']) => Action;
 }
 
@@ -79,7 +80,7 @@ export const BuildActions = {
 
   /**
    * Create an image watermark action
-   * @param image - Watermark image
+   * @param image - Watermark image (local file or URL)
    * @param options - Watermark options
    * @param options.width - Width dimension of the watermark (value and unit, e.g. {value: 100, unit: '%'})
    * @param options.height - Height dimension of the watermark (value and unit, e.g. {value: 100, unit: '%'})
@@ -91,7 +92,7 @@ export const BuildActions = {
    * @param options.opacity - Watermark opacity (0 is fully transparent, 1 is fully opaque)
    */
   watermarkImage(
-    image: FileInput,
+    image: FileInputWithUrl,
     options: Partial<Omit<components['schemas']['ImageWatermarkAction'], 'type' | 'image'>> = {
       width: DEFAULT_DIMENSION,
       height: DEFAULT_DIMENSION,
@@ -127,10 +128,10 @@ export const BuildActions = {
 
   /**
    * Create an apply Instant JSON action
-   * @param file - Instant JSON file input
+   * @param file - Instant JSON file input (local file or URL)
    */
   applyInstantJson(
-    file: FileInput,
+    file: FileInputWithUrl,
   ): ActionWithFileInput<components['schemas']['ApplyInstantJsonAction']> {
     return {
       __needsFileRegistration: true,
@@ -146,13 +147,13 @@ export const BuildActions = {
 
   /**
    * Create an apply XFDF action
-   * @param file - XFDF file input
+   * @param file - XFDF file input (local file or URL)
    * @param options - Apply Xfdf options
    * @param options.ignorePageRotation - If true, ignores page rotation when applying XFDF data (default: false)
    * @param options.richTextEnabled - If true, plain text annotations will be converted to rich text annotations. If false, all text annotations will be plain text annotations (default: true)
    */
   applyXfdf(
-    file: FileInput,
+    file: FileInputWithUrl,
     options?: Partial<Omit<components['schemas']['ApplyXfdfAction'], 'type' | 'file'>>,
   ): ActionWithFileInput<components['schemas']['ApplyXfdfAction']> {
     return {

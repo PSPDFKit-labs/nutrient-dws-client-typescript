@@ -43,7 +43,6 @@ export {
   validateFileInput,
   processFileInput,
   isRemoteFileInput,
-  processRemoteFileInput,
   type NormalizedFileData,
 } from './inputs';
 export { type ActionWithFileInput } from './build';

@@ -14,6 +14,12 @@ jest.mock('../../http');
 const mockValidateFileInput = inputsModule.validateFileInput as jest.MockedFunction<
   typeof inputsModule.validateFileInput
 >;
+const mockIsRemoteFileInput = inputsModule.isRemoteFileInput as jest.MockedFunction<
+  typeof inputsModule.isRemoteFileInput
+>;
+const mockGetRemoteUrl = inputsModule.getRemoteUrl as jest.MockedFunction<
+  typeof inputsModule.getRemoteUrl
+>;
 const mockSendRequest = httpModule.sendRequest as jest.MockedFunction<
   typeof httpModule.sendRequest
 >;
@@ -31,6 +37,8 @@ describe('WorkflowBuilder', () => {
     workflow = new WorkflowBuilder(mockClientOptions);
     // Default mocks
     mockValidateFileInput.mockReturnValue(true);
+    mockIsRemoteFileInput.mockReturnValue(false);
+    mockGetRemoteUrl.mockReturnValue(null); // Default: not a URL
     mockSendRequest.mockResolvedValue({
       data: new Blob(['mock response'], { type: 'application/pdf' }) as never,
       status: 200,
@@ -102,20 +110,16 @@ describe('WorkflowBuilder', () => {
       expect(result).toBe(workflow);
     });
 
-    it('should not call registerAssets when adding a file as a URL string', () => {
-      // Mock isRemoteFileInput to return true for URL string
-      jest.spyOn(inputsModule, 'isRemoteFileInput').mockReturnValueOnce(true);
-
-      // Create a spy on the registerAssets method
-      const registerAssetsSpy = jest.spyOn(workflow as never, 'registerAssets');
-
+    it('should handle URL string input without adding to assets map', () => {
       const urlString = 'https://example.com/document.pdf';
+      // Mock getRemoteUrl to return the URL (indicating it's a remote file)
+      mockGetRemoteUrl.mockReturnValueOnce(urlString);
+
       const result = workflow.addFilePart(urlString);
 
       expect(result).toBe(workflow);
-      expect(registerAssetsSpy).not.toHaveBeenCalled();
 
-      // Verify the file part was added with the URL
+      // Verify the file part was added with the URL (not stored in assets)
       expect(
         workflow['buildInstructions'].parts[workflow['buildInstructions'].parts.length - 1],
       ).toEqual(
@@ -124,21 +128,18 @@ describe('WorkflowBuilder', () => {
         }),
       );
 
-      registerAssetsSpy.mockRestore();
+      // Verify no assets were registered (URLs are passed directly)
+      expect(workflow['assets'].size).toBe(0);
     });
 
-    it('should not call registerAssets when adding a file as a URL object', () => {
-      // Mock isRemoteFileInput to return true for URL object
-      jest.spyOn(inputsModule, 'isRemoteFileInput').mockReturnValueOnce(true);
-
-      // Create a spy on the registerAssets method
-      const registerAssetsSpy = jest.spyOn(workflow as never, 'registerAssets');
-
+    it('should handle URL object input without adding to assets map', () => {
       const urlObject: UrlInput = { type: 'url', url: 'https://example.com/document.pdf' };
+      // Mock getRemoteUrl to return the URL (indicating it's a remote file)
+      mockGetRemoteUrl.mockReturnValueOnce(urlObject.url);
+
       const result = workflow.addFilePart(urlObject);
 
       expect(result).toBe(workflow);
-      expect(registerAssetsSpy).not.toHaveBeenCalled();
 
       // Verify the file part was added with the URL
       expect(
@@ -149,7 +150,8 @@ describe('WorkflowBuilder', () => {
         }),
       );
 
-      registerAssetsSpy.mockRestore();
+      // Verify no assets were registered (URLs are passed directly)
+      expect(workflow['assets'].size).toBe(0);
     });
   });
 
@@ -171,18 +173,14 @@ describe('WorkflowBuilder', () => {
       expect(result).toBe(workflow);
     });
 
-    it('should not call registerAssets when adding HTML as a URL string', () => {
-      // Mock isRemoteFileInput to return true for URL string
-      jest.spyOn(inputsModule, 'isRemoteFileInput').mockReturnValueOnce(true);
-
-      // Create a spy on the registerAssets method
-      const registerAssetsSpy = jest.spyOn(workflow as never, 'registerAssets');
-
+    it('should handle HTML URL string input without adding to assets map', () => {
       const urlString = 'https://example.com/page.html';
+      // Mock getRemoteUrl to return the URL (indicating it's a remote file)
+      mockGetRemoteUrl.mockReturnValueOnce(urlString);
+
       const result = workflow.addHtmlPart(urlString);
 
       expect(result).toBe(workflow);
-      expect(registerAssetsSpy).not.toHaveBeenCalled();
 
       // Verify the HTML part was added with the URL
       expect(
@@ -193,21 +191,18 @@ describe('WorkflowBuilder', () => {
         }),
       );
 
-      registerAssetsSpy.mockRestore();
+      // Verify no assets were registered (URLs are passed directly)
+      expect(workflow['assets'].size).toBe(0);
     });
 
-    it('should not call registerAssets when adding HTML as a URL object', () => {
-      // Mock isRemoteFileInput to return true for URL object
-      jest.spyOn(inputsModule, 'isRemoteFileInput').mockReturnValueOnce(true);
-
-      // Create a spy on the registerAssets method
-      const registerAssetsSpy = jest.spyOn(workflow as never, 'registerAssets');
-
+    it('should handle HTML URL object input without adding to assets map', () => {
       const urlObject: UrlInput = { type: 'url', url: 'https://example.com/page.html' };
+      // Mock getRemoteUrl to return the URL (indicating it's a remote file)
+      mockGetRemoteUrl.mockReturnValueOnce(urlObject.url);
+
       const result = workflow.addHtmlPart(urlObject);
 
       expect(result).toBe(workflow);
-      expect(registerAssetsSpy).not.toHaveBeenCalled();
 
       // Verify the HTML part was added with the URL
       expect(
@@ -218,7 +213,8 @@ describe('WorkflowBuilder', () => {
         }),
       );
 
-      registerAssetsSpy.mockRestore();
+      // Verify no assets were registered (URLs are passed directly)
+      expect(workflow['assets'].size).toBe(0);
     });
   });
 
@@ -273,6 +269,54 @@ describe('WorkflowBuilder', () => {
 
       expect(result).toBe(workflow);
       expect(mockValidateFileInput).toHaveBeenCalledWith(xfdfFile);
+    });
+
+    it('should handle URL input for watermarkImage action', () => {
+      const urlInput: UrlInput = { type: 'url', url: 'https://example.com/watermark.png' };
+      const action = BuildActions.watermarkImage(urlInput);
+
+      // Mock getRemoteUrl: first call for test.pdf (returns null), second for URL action (returns URL)
+      mockGetRemoteUrl.mockReturnValueOnce(null).mockReturnValueOnce(urlInput.url);
+
+      workflow.addFilePart('test.pdf').applyAction(action);
+
+      // Verify the action's fileInput contains the URL
+      expect(action.fileInput).toEqual(urlInput);
+
+      // Verify only the test.pdf was registered as local asset (not the watermark URL)
+      expect(workflow['assets'].size).toBe(1);
+    });
+
+    it('should handle URL input for applyInstantJson action', () => {
+      const urlInput: UrlInput = { type: 'url', url: 'https://example.com/annotations.json' };
+      const action = BuildActions.applyInstantJson(urlInput);
+
+      // Mock getRemoteUrl: first call for test.pdf (returns null), second for URL action (returns URL)
+      mockGetRemoteUrl.mockReturnValueOnce(null).mockReturnValueOnce(urlInput.url);
+
+      workflow.addFilePart('test.pdf').applyAction(action);
+
+      // Verify the action's fileInput contains the URL
+      expect(action.fileInput).toEqual(urlInput);
+
+      // Verify only the test.pdf was registered as local asset (not the JSON URL)
+      expect(workflow['assets'].size).toBe(1);
+    });
+
+    it('should handle URL input for applyXfdf action', () => {
+      const urlInput: UrlInput = { type: 'url', url: 'https://example.com/annotations.xfdf' };
+      const action = BuildActions.applyXfdf(urlInput);
+
+      // Mock getRemoteUrl: first call for test.pdf (returns null), second for URL action (returns URL)
+      mockGetRemoteUrl.mockReturnValueOnce(null).mockReturnValueOnce(urlInput.url);
+
+      workflow.addFilePart('test.pdf').applyAction(action);
+
+      // Verify the action's fileInput contains the URL
+      expect(action.fileInput).toEqual(urlInput);
+
+      // Verify only the test.pdf was registered as local asset (not the XFDF URL)
+      expect(workflow['assets'].size).toBe(1);
     });
   });
 

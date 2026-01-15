@@ -1,16 +1,8 @@
-import {
-  getPdfPageCount,
-  isRemoteFileInput,
-  isValidPdf,
-  processFileInput,
-  processRemoteFileInput,
-  validateFileInput,
-} from '../../inputs';
+import { getRemoteUrl, isRemoteFileInput, processFileInput, validateFileInput } from '../../inputs';
 import { ValidationError } from '../../errors';
 import { Readable } from 'stream';
 import fs from 'fs';
 import type { FileInput } from '../../types';
-import { samplePDF, TestDocumentGenerator } from '../helpers';
 
 // Mock fetch for URL tests
 global.fetch = jest.fn();
@@ -197,6 +189,42 @@ describe('Input Processing (Node.js only)', () => {
     });
   });
 
+  describe('getRemoteUrl', () => {
+    it('should extract URL from URL string', () => {
+      const url = 'https://example.com/test.pdf';
+      expect(getRemoteUrl(url)).toBe(url);
+    });
+
+    it('should return null for file path string', () => {
+      expect(getRemoteUrl('test.pdf')).toBeNull();
+    });
+
+    it('should extract URL from UrlInput object', () => {
+      const urlInput = { type: 'url' as const, url: 'https://example.com/test.pdf' };
+      expect(getRemoteUrl(urlInput)).toBe('https://example.com/test.pdf');
+    });
+
+    it('should return null for Buffer', () => {
+      expect(getRemoteUrl(Buffer.from('test'))).toBeNull();
+    });
+
+    it('should return null for Uint8Array', () => {
+      expect(getRemoteUrl(new Uint8Array([1, 2, 3]))).toBeNull();
+    });
+
+    it('should return null for FilePathInput', () => {
+      expect(getRemoteUrl({ type: 'file-path', path: 'test.pdf' })).toBeNull();
+    });
+
+    it('should return null for BufferInput', () => {
+      expect(getRemoteUrl({ type: 'buffer', buffer: Buffer.from('test'), filename: 'test.pdf' })).toBeNull();
+    });
+
+    it('should return null for Uint8ArrayInput', () => {
+      expect(getRemoteUrl({ type: 'uint8array', data: new Uint8Array([1, 2, 3]), filename: 'test.bin' })).toBeNull();
+    });
+  });
+
   describe('processFileInput - Invalid inputs', () => {
     it('should throw for URL', async () => {
       await expect(processFileInput('https://example.com/test.pdf')).rejects.toThrow(
@@ -227,338 +255,6 @@ describe('Input Processing (Node.js only)', () => {
       await expect(processFileInput({ type: 'unsupported' } as any)).rejects.toThrow(
         ValidationError,
       );
-    });
-  });
-
-  describe('processRemoteFileInput', () => {
-    beforeEach(() => {
-      (fetch as jest.Mock).mockClear();
-    });
-
-    it('should process URL string input', async () => {
-      const mockResponse = {
-        ok: true,
-        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(10)),
-      };
-      (fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-      const result = await processRemoteFileInput('https://example.com/test.pdf');
-
-      expect(fetch).toHaveBeenCalledWith('https://example.com/test.pdf');
-      expect(mockResponse.arrayBuffer).toHaveBeenCalled();
-      expect(result).toEqual({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        data: expect.any(Buffer),
-        filename: 'buffer',
-      });
-    });
-
-    it('should process URL object input', async () => {
-      const mockResponse = {
-        ok: true,
-        arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(10)),
-      };
-      (fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-      const result = await processRemoteFileInput({
-        type: 'url',
-        url: 'https://example.com/test.pdf',
-      });
-
-      expect(fetch).toHaveBeenCalledWith('https://example.com/test.pdf');
-      expect(mockResponse.arrayBuffer).toHaveBeenCalled();
-      expect(result).toEqual({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        data: expect.any(Buffer),
-        filename: 'buffer',
-      });
-    });
-
-    it('should throw ValidationError for non-OK response', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-      };
-      (fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-      await expect(processRemoteFileInput('https://example.com/test.pdf')).rejects.toThrow(
-        ValidationError,
-      );
-    });
-
-    it('should throw ValidationError when fetch fails', async () => {
-      (fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
-
-      await expect(processRemoteFileInput('https://example.com/test.pdf')).rejects.toThrow(
-        ValidationError,
-      );
-    });
-  });
-
-  describe('getPdfPageCount', () => {
-    const cases = [
-      {
-        name: 'PDF with 1 page',
-        input: TestDocumentGenerator.generateSimplePdf('Text'),
-        expected: 1,
-      },
-      { name: 'PDF with 6 pages', input: samplePDF, expected: 6 },
-    ];
-
-    it.each(cases)('should return $expected for $name', async (testCase) => {
-      // First convert FileInput to NormalizedFileData
-      const normalizedData = await processFileInput(testCase.input);
-      await expect(getPdfPageCount(normalizedData)).resolves.toEqual(testCase.expected);
-    });
-
-    it('should handle Buffer data', async () => {
-      const pdfBuffer = Buffer.from(TestDocumentGenerator.generateSimplePdf('Text'));
-      const normalizedData = {
-        data: pdfBuffer,
-        filename: 'test.pdf',
-      };
-      await expect(getPdfPageCount(normalizedData)).resolves.toEqual(1);
-    });
-
-    it('should handle Uint8Array data', async () => {
-      const pdfBuffer = Buffer.from(TestDocumentGenerator.generateSimplePdf('Text'));
-      const uint8Array = new Uint8Array(pdfBuffer);
-      const normalizedData = {
-        data: uint8Array,
-        filename: 'test.pdf',
-      };
-      await expect(getPdfPageCount(normalizedData)).resolves.toEqual(1);
-    });
-
-    it('should handle ReadableStream data', async () => {
-      const pdfBuffer = Buffer.from(TestDocumentGenerator.generateSimplePdf('Text'));
-      const mockStream = new Readable();
-      mockStream.push(pdfBuffer);
-      mockStream.push(null); // End the stream
-
-      const normalizedData = {
-        data: mockStream,
-        filename: 'test.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).resolves.toEqual(1);
-    });
-
-    it('should throw for invalid PDF data type', async () => {
-      const normalizedData = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
-        data: 'not a valid data type' as any,
-        filename: 'test.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw when ReadableStream errors', async () => {
-      const mockStream = new Readable({
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        read() {
-          this.emit('error', new Error('Stream error'));
-        },
-      });
-
-      const normalizedData = {
-        data: mockStream,
-        filename: 'test.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw when PDF has no objects', async () => {
-      // Create a PDF-like buffer without any objects
-      const invalidPdf = Buffer.from('%PDF-1.4\n%%EOF');
-      const normalizedData = {
-        data: invalidPdf,
-        filename: 'invalid.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw when PDF has no catalog object', async () => {
-      // Create a PDF-like buffer with objects but no catalog
-      const invalidPdf = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /NotCatalog >>\nendobj\n%%EOF');
-      const normalizedData = {
-        data: invalidPdf,
-        filename: 'invalid.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw when PDF catalog has no Pages reference', async () => {
-      // Create a PDF-like buffer with catalog but no Pages reference
-      const invalidPdf = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF');
-      const normalizedData = {
-        data: invalidPdf,
-        filename: 'invalid.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw when Pages object is not found', async () => {
-      // Create a PDF-like buffer with catalog and Pages reference but no Pages object
-      const invalidPdf = Buffer.from(
-        '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n%%EOF',
-      );
-      const normalizedData = {
-        data: invalidPdf,
-        filename: 'invalid.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-
-    it('should throw when Pages object has no Count', async () => {
-      // Create a PDF-like buffer with Pages object but no Count
-      const invalidPdf = Buffer.from(
-        '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages >>\nendobj\n%%EOF',
-      );
-      const normalizedData = {
-        data: invalidPdf,
-        filename: 'invalid.pdf',
-      };
-
-      await expect(getPdfPageCount(normalizedData)).rejects.toThrow(ValidationError);
-    });
-  });
-
-  describe('isValidPdf', () => {
-    it('should return true for valid PDF files', async () => {
-      // Test with generated PDF
-      const validPdf = TestDocumentGenerator.generateSimplePdf('Test content');
-      const normalizedValidPdf = await processFileInput(validPdf);
-      await expect(isValidPdf(normalizedValidPdf)).resolves.toBe(true);
-
-      // Test with sample PDF
-      const normalizedSamplePdf = await processFileInput(samplePDF);
-      await expect(isValidPdf(normalizedSamplePdf)).resolves.toBe(true);
-    });
-
-    it('should return false for non-PDF files', async () => {
-      // Test with non-PDF buffer
-      const nonPdfBuffer = Buffer.from('This is not a PDF file');
-      const normalizedNonPdfBuffer = await processFileInput(nonPdfBuffer);
-      await expect(isValidPdf(normalizedNonPdfBuffer)).resolves.toBe(false);
-
-      // Test with non-PDF Uint8Array
-      const nonPdfUint8Array = new TextEncoder().encode('This is not a PDF file');
-      const normalizedNonPdfUint8Array = await processFileInput(nonPdfUint8Array);
-      await expect(isValidPdf(normalizedNonPdfUint8Array)).resolves.toBe(false);
-    });
-
-    it('should handle invalid inputs gracefully', async () => {
-      // For this test, we'll create normalized data directly since we're testing error cases
-      // that would fail during processFileInput
-
-      // Create a mock ReadableStream that throws an error when read
-      const errorStream = new Readable({
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        read() {
-          this.emit('error', new Error('Read error'));
-        },
-      });
-
-      const normalizedErrorData = {
-        data: errorStream,
-        filename: 'error.pdf',
-      };
-
-      await expect(isValidPdf(normalizedErrorData)).resolves.toBe(false);
-    });
-
-    it('should handle Buffer data', async () => {
-      // Valid PDF Buffer
-      const validPdfBuffer = Buffer.from(TestDocumentGenerator.generateSimplePdf('Text'));
-      const normalizedValidData = {
-        data: validPdfBuffer,
-        filename: 'valid.pdf',
-      };
-      await expect(isValidPdf(normalizedValidData)).resolves.toBe(true);
-
-      // Invalid PDF Buffer
-      const invalidPdfBuffer = Buffer.from('Not a PDF');
-      const normalizedInvalidData = {
-        data: invalidPdfBuffer,
-        filename: 'invalid.pdf',
-      };
-      await expect(isValidPdf(normalizedInvalidData)).resolves.toBe(false);
-    });
-
-    it('should handle Uint8Array data', async () => {
-      // Valid PDF Uint8Array
-      const validPdfBuffer = Buffer.from(TestDocumentGenerator.generateSimplePdf('Text'));
-      const validUint8Array = new Uint8Array(validPdfBuffer);
-      const normalizedValidData = {
-        data: validUint8Array,
-        filename: 'valid.pdf',
-      };
-      await expect(isValidPdf(normalizedValidData)).resolves.toBe(true);
-
-      // Invalid PDF Uint8Array
-      const invalidUint8Array = new TextEncoder().encode('Not a PDF');
-      const normalizedInvalidData = {
-        data: invalidUint8Array,
-        filename: 'invalid.pdf',
-      };
-      await expect(isValidPdf(normalizedInvalidData)).resolves.toBe(false);
-    });
-
-    it('should handle ReadableStream data', async () => {
-      // Valid PDF ReadableStream
-      const validPdfBuffer = Buffer.from(TestDocumentGenerator.generateSimplePdf('Text'));
-      const validStream = new Readable();
-      validStream.push(validPdfBuffer);
-      validStream.push(null); // End the stream
-
-      const normalizedValidData = {
-        data: validStream,
-        filename: 'valid.pdf',
-      };
-      await expect(isValidPdf(normalizedValidData)).resolves.toBe(true);
-
-      // Invalid PDF ReadableStream
-      const invalidStream = new Readable();
-      invalidStream.push(Buffer.from('Not a PDF'));
-      invalidStream.push(null); // End the stream
-
-      const normalizedInvalidData = {
-        data: invalidStream,
-        filename: 'invalid.pdf',
-      };
-      await expect(isValidPdf(normalizedInvalidData)).resolves.toBe(false);
-    });
-
-    it('should return false for invalid data types', async () => {
-      const normalizedInvalidData = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
-        data: 'not a valid data type' as any,
-        filename: 'invalid.pdf',
-      };
-
-      await expect(isValidPdf(normalizedInvalidData)).resolves.toBe(false);
-    });
-
-    it('should handle errors during processing', async () => {
-      // Mock a general error during processing
-      jest.spyOn(Buffer.prototype, 'slice').mockImplementationOnce(() => {
-        throw new Error('Unexpected error');
-      });
-
-      const normalizedData = {
-        data: Buffer.from('test'),
-        filename: 'test.pdf',
-      };
-
-      await expect(isValidPdf(normalizedData)).resolves.toBe(false);
     });
   });
 });
