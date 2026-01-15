@@ -1,4 +1,4 @@
-import type { FileInput, UrlInput } from './inputs';
+import type { FileInput, FileInputWithUrl } from './inputs';
 import type { components } from '../generated/api-types';
 import type { ApplicableAction } from '../builders/workflow';
 
@@ -40,13 +40,13 @@ export type OutputTypeMap = {
 // Stage 1: Initial workflow - only part methods available
 export interface WorkflowInitialStage {
   addFilePart(
-    file: FileInput,
+    file: FileInputWithUrl,
     options?: Omit<components['schemas']['FilePart'], 'file' | 'actions'>,
     actions?: ApplicableAction[],
   ): WorkflowWithPartsStage;
   addHtmlPart(
-    html: FileInput,
-    assets?: Exclude<FileInput, UrlInput>[],
+    html: FileInputWithUrl,
+    assets?: FileInput[],
     options?: Omit<components['schemas']['HTMLPart'], 'html' | 'actions'>,
     actions?: ApplicableAction[],
   ): WorkflowWithPartsStage;

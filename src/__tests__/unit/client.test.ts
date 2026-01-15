@@ -114,12 +114,6 @@ interface MockWorkflowWithOutputStage<T extends keyof OutputTypeMap | undefined 
 const mockValidateFileInput = inputsModule.validateFileInput as jest.MockedFunction<
   typeof inputsModule.validateFileInput
 >;
-const mockIsValidPdf = inputsModule.isValidPdf as jest.MockedFunction<
-  typeof inputsModule.isValidPdf
->;
-const mockGetPdfPageCount = inputsModule.getPdfPageCount as jest.MockedFunction<
-  typeof inputsModule.getPdfPageCount
->;
 const mockSendRequest = httpModule.sendRequest as jest.MockedFunction<
   typeof httpModule.sendRequest
 >;
@@ -173,8 +167,6 @@ describe('NutrientClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockValidateFileInput.mockReturnValue(true);
-    mockIsValidPdf.mockResolvedValue(true);
-    mockGetPdfPageCount.mockResolvedValue(10);
     mockSendRequest.mockResolvedValue({
       data: TestDocumentGenerator.generateSimplePdf() as never,
       status: 200,
@@ -240,70 +232,6 @@ describe('NutrientClient', () => {
       ).toThrow('Base URL must be a string');
     });
 
-    it('should accept allowUrlFetch option', () => {
-      const clientWithUrlFetch = new NutrientClient({
-        apiKey: 'test-key',
-        allowUrlFetch: true,
-      });
-      expect(clientWithUrlFetch).toBeDefined();
-
-      const clientWithoutUrlFetch = new NutrientClient({
-        apiKey: 'test-key',
-        allowUrlFetch: false,
-      });
-      expect(clientWithoutUrlFetch).toBeDefined();
-    });
-  });
-
-  describe('SSRF Protection', () => {
-    let client: NutrientClient;
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should pass allowUrlFetch=false to processRemoteFileInput by default', async () => {
-      (inputsModule.isRemoteFileInput as jest.Mock).mockReturnValue(true);
-      (inputsModule.processRemoteFileInput as jest.Mock).mockRejectedValue(
-        new ValidationError('SSRF protection: URL fetching disabled'),
-      );
-
-      client = new NutrientClient({
-        apiKey: 'test-key',
-      });
-
-      await expect(client.sign('https://example.com/test.pdf')).rejects.toThrow(
-        /SSRF protection/,
-      );
-      expect(inputsModule.processRemoteFileInput).toHaveBeenCalledWith(
-        'https://example.com/test.pdf',
-        false,
-      );
-    });
-
-    it('should pass allowUrlFetch=true when configured', async () => {
-      const mockBuffer = TestDocumentGenerator.generateSimplePdf('Test');
-      (inputsModule.isRemoteFileInput as jest.Mock).mockReturnValue(true);
-      (inputsModule.processRemoteFileInput as jest.Mock).mockResolvedValue({
-        data: mockBuffer,
-        filename: 'test.pdf',
-      });
-      (inputsModule.isValidPdf as jest.Mock).mockResolvedValue(true);
-      (httpModule.sendRequest as jest.Mock).mockResolvedValue({
-        data: mockBuffer,
-      });
-
-      client = new NutrientClient({
-        apiKey: 'test-key',
-        allowUrlFetch: true,
-      });
-
-      await client.sign('https://example.com/test.pdf');
-      expect(inputsModule.processRemoteFileInput).toHaveBeenCalledWith(
-        'https://example.com/test.pdf',
-        true,
-      );
-    });
   });
 
   describe('workflow()', () => {
@@ -1121,8 +1049,7 @@ describe('NutrientClient', () => {
 
       await client.addPage(file, count, index);
 
-      // Mock getPdfPageCount to test index logic
-      // This is a simplified test since we can't easily mock the internal implementation
+      // Verify the workflow was called with the correct page ranges
       expect(mockWorkflowInstance.addFilePart).toHaveBeenCalledWith(file, {
         pages: { end: 1, start: 0 },
       });
@@ -1234,18 +1161,19 @@ describe('NutrientClient', () => {
 
     it('should delete specific pages from a document', async () => {
       const file = 'test-file.pdf';
-      const pageIndices = [3, 1, 1];
+      const pageIndices = [3, 1, 1]; // Delete pages 1 and 3 (duplicates removed)
 
       await client.deletePages(file, pageIndices);
 
+      // Should keep: [0-0], [2-2], [4 to end]
       expect(mockWorkflowInstance.addFilePart).toHaveBeenCalledWith(file, {
-        pages: { end: 0, start: 0 },
+        pages: { start: 0, end: 0 },
       });
       expect(mockWorkflowInstance.addFilePart).toHaveBeenCalledWith(file, {
-        pages: { end: 2, start: 2 },
+        pages: { start: 2, end: 2 },
       });
       expect(mockWorkflowInstance.addFilePart).toHaveBeenCalledWith(file, {
-        pages: { end: 9, start: 4 },
+        pages: { start: 4, end: -1 }, // -1 means "to end of document"
       });
       expect(mockWorkflowInstance.addFilePart).toHaveBeenCalledTimes(3);
       expect(mockWorkflowInstance.outputPdf).toHaveBeenCalled();

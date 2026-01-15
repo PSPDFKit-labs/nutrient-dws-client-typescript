@@ -1,5 +1,6 @@
 import type {
   FileInput,
+  FileInputWithUrl,
   OutputTypeMap,
   TypedWorkflowResult,
   UrlInput,
@@ -41,13 +42,9 @@ export class WorkflowBuilder<
    * @param asset - The asset to register
    * @returns The asset key that can be used in BuildActions
    */
-  private registerAssets(asset: Exclude<FileInput, UrlInput>): string {
+  private registerAssets(asset: FileInput): string {
     if (!validateFileInput(asset)) {
       throw new ValidationError('Invalid file input provided to workflow', { asset });
-    }
-
-    if (isRemoteFileInput(asset)) {
-      throw new ValidationError("Remote file input doesn't need to be registered", { asset });
     }
 
     const assetKey = `asset_${this.assetIndex++}`;
@@ -60,7 +57,7 @@ export class WorkflowBuilder<
    * Adds a file part to the workflow
    */
   addFilePart(
-    file: FileInput,
+    file: FileInputWithUrl,
     options?: Omit<components['schemas']['FilePart'], 'file' | 'actions'>,
     actions?: ApplicableAction[],
   ): this {
@@ -68,9 +65,10 @@ export class WorkflowBuilder<
 
     let fileField: components['schemas']['FileHandle'];
     if (isRemoteFileInput(file)) {
-      fileField = { url: typeof file === 'string' ? file : file.url };
+      const url = typeof file === 'string' ? file : (file as UrlInput).url;
+      fileField = { url };
     } else {
-      fileField = this.registerAssets(file);
+      fileField = this.registerAssets(file as FileInput);
     }
 
     const processedActions = actions
@@ -91,8 +89,8 @@ export class WorkflowBuilder<
    * Adds an HTML part to the workflow
    */
   addHtmlPart(
-    html: FileInput,
-    assets?: Exclude<FileInput, UrlInput>[],
+    html: FileInputWithUrl,
+    assets?: FileInput[],
     options?: Omit<components['schemas']['HTMLPart'], 'html' | 'actions'>,
     actions?: ApplicableAction[],
   ): this {
@@ -100,18 +98,16 @@ export class WorkflowBuilder<
 
     let htmlField: components['schemas']['FileHandle'];
     if (isRemoteFileInput(html)) {
-      htmlField = { url: typeof html === 'string' ? html : html.url };
+      const url = typeof html === 'string' ? html : (html as UrlInput).url;
+      htmlField = { url };
     } else {
-      htmlField = this.registerAssets(html);
+      htmlField = this.registerAssets(html as FileInput);
     }
 
     let assetsField: string[] | undefined;
     if (assets) {
       assetsField = [];
       for (const asset of assets) {
-        if (isRemoteFileInput(asset)) {
-          throw new ValidationError('Assets file input cannot be an URL', { input: asset });
-        }
         const asset_key = this.registerAssets(asset);
         assetsField.push(asset_key);
       }
@@ -189,14 +185,7 @@ export class WorkflowBuilder<
   private processAction(action: ApplicableAction): components['schemas']['BuildAction'] {
     if (this.isActionWithFileInput(action)) {
       // Register the file and create the actual action
-      let fileHandle: components['schemas']['FileHandle'];
-      if (isRemoteFileInput(action.fileInput)) {
-        fileHandle = {
-          url: typeof action.fileInput === 'string' ? action.fileInput : action.fileInput.url,
-        };
-      } else {
-        fileHandle = this.registerAssets(action.fileInput);
-      }
+      const fileHandle = this.registerAssets(action.fileInput);
       return action.createAction(fileHandle);
     }
     return action;

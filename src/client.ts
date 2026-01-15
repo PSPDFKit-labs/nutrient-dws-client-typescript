@@ -1,23 +1,19 @@
 import type {
   FileInput,
+  FileInputWithUrl,
   NutrientClientOptions,
   WorkflowInitialStage,
   TypedWorkflowResult,
   WorkflowWithPartsStage,
   OutputTypeMap,
   WorkflowResult,
+  UrlInput,
 } from './types';
 import { ValidationError, NutrientError } from './errors';
 import { workflow } from './workflow';
 import type { components, operations } from './generated/api-types';
 import { BuildActions } from './build';
-import {
-  getPdfPageCount,
-  isRemoteFileInput,
-  processFileInput,
-  processRemoteFileInput,
-  isValidPdf,
-} from './inputs';
+import { processFileInput, isRemoteFileInput } from './inputs';
 import { sendRequest } from './http';
 import type { NormalizedFileData } from './inputs';
 import type { ApplicableAction } from './builders/workflow';
@@ -115,22 +111,6 @@ export class NutrientClient {
     if (options.baseUrl && typeof options.baseUrl !== 'string') {
       throw new ValidationError('Base URL must be a string');
     }
-  }
-
-  /**
-   * Normalizes a file input, handling both local files and URLs.
-   * URL fetching requires `allowUrlFetch: true` in client options.
-   *
-   * @param input - The file input to normalize
-   * @returns Normalized file data
-   * @throws {ValidationError} If input is a URL and allowUrlFetch is false
-   * @private
-   */
-  private async normalizeFileInput(input: FileInput): Promise<NormalizedFileData> {
-    if (isRemoteFileInput(input)) {
-      return processRemoteFileInput(input, this.options.allowUrlFetch ?? false);
-    }
-    return processFileInput(input);
   }
 
   /**
@@ -273,7 +253,11 @@ export class NutrientClient {
   /**
    * Signs a PDF document
    *
-   * @param pdf - The PDF file to sign
+   * Note: Unlike most other methods, `sign()` does not accept URLs. This is because
+   * the underlying `/sign` API endpoint only accepts binary file uploads. To sign a
+   * remote file, fetch its contents first and pass the buffer.
+   *
+   * @param pdf - The PDF file to sign (file path, Buffer, or Uint8Array - not URLs)
    * @param data - Signature data
    * @param options - Additional options
    * @returns Promise resolving to the signed PDF file output
@@ -307,23 +291,18 @@ export class NutrientClient {
       graphicImage?: FileInput;
     },
   ): Promise<OutputTypeMap['pdf']> {
-    // Normalize the file input
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
+    const normalizedFile = await processFileInput(pdf);
 
     // Prepare optional files
     let normalizedImage: NormalizedFileData | undefined;
     let normalizedGraphicImage: NormalizedFileData | undefined;
 
     if (options?.image) {
-      normalizedImage = await this.normalizeFileInput(options.image);
+      normalizedImage = await processFileInput(options.image);
     }
 
     if (options?.graphicImage) {
-      normalizedGraphicImage = await this.normalizeFileInput(options.graphicImage);
+      normalizedGraphicImage = await processFileInput(options.graphicImage);
     }
 
     const response = await sendRequest(
@@ -374,7 +353,7 @@ export class NutrientClient {
    * ```
    */
   async watermarkText(
-    file: FileInput,
+    file: FileInputWithUrl,
     text: string,
     options: Partial<Omit<components['schemas']['TextWatermarkAction'], 'type' | 'text'>> = {},
   ): Promise<OutputTypeMap['pdf']> {
@@ -414,7 +393,7 @@ export class NutrientClient {
    * ```
    */
   async watermarkImage(
-    file: FileInput,
+    file: FileInputWithUrl,
     image: FileInput,
     options: Partial<Omit<components['schemas']['ImageWatermarkAction'], 'type' | 'image'>> = {},
   ): Promise<OutputTypeMap['pdf']> {
@@ -482,7 +461,7 @@ export class NutrientClient {
       | 'webp'
       | 'html'
       | 'markdown',
-  >(file: FileInput, targetFormat: T): Promise<OutputTypeMap[T]> {
+  >(file: FileInputWithUrl, targetFormat: T): Promise<OutputTypeMap[T]> {
     const builder = this.workflow().addFilePart(file);
     let result: TypedWorkflowResult<T>;
 
@@ -562,7 +541,7 @@ export class NutrientClient {
    * ```
    */
   async ocr(
-    file: FileInput,
+    file: FileInputWithUrl,
     language: components['schemas']['OcrLanguage'] | components['schemas']['OcrLanguage'][],
   ): Promise<OutputTypeMap['pdf']> {
     const ocrAction = BuildActions.ocr(language);
@@ -611,7 +590,7 @@ export class NutrientClient {
    * ```
    */
   async extractText(
-    file: FileInput,
+    file: FileInputWithUrl,
     pages?: { start?: number; end?: number },
   ): Promise<OutputTypeMap['json-content']> {
     const normalizedPages = pages ? normalizePageParams(pages) : undefined;
@@ -679,7 +658,7 @@ export class NutrientClient {
    * ```
    */
   async extractTable(
-    file: FileInput,
+    file: FileInputWithUrl,
     pages?: { start?: number; end?: number },
   ): Promise<OutputTypeMap['json-content']> {
     const normalizedPages = pages ? normalizePageParams(pages) : undefined;
@@ -740,7 +719,7 @@ export class NutrientClient {
    * ```
    */
   async extractKeyValuePairs(
-    file: FileInput,
+    file: FileInputWithUrl,
     pages?: { start?: number; end?: number },
   ): Promise<OutputTypeMap['json-content']> {
     const normalizedPages = pages ? normalizePageParams(pages) : undefined;
@@ -780,7 +759,7 @@ export class NutrientClient {
    * ```
    */
   async passwordProtect(
-    file: FileInput,
+    file: FileInputWithUrl,
     userPassword: string,
     ownerPassword: string,
     permissions?: components['schemas']['PDFUserPermission'][],
@@ -823,15 +802,9 @@ export class NutrientClient {
    * ```
    */
   async setMetadata(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     metadata: components['schemas']['Metadata'],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     const result = await this.workflow().addFilePart(pdf).outputPdf({ metadata }).execute();
     return this.processTypedWorkflowResult(result);
   }
@@ -863,15 +836,9 @@ export class NutrientClient {
    * ```
    */
   async setPageLabels(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     labels: components['schemas']['Label'][],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     const result = await this.workflow().addFilePart(pdf).outputPdf({ labels }).execute();
     return this.processTypedWorkflowResult(result);
   }
@@ -900,15 +867,9 @@ export class NutrientClient {
    * ```
    */
   async applyInstantJson(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     instantJsonFile: FileInput,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     const applyJsonAction = BuildActions.applyInstantJson(instantJsonFile);
 
     const result = await this.workflow()
@@ -948,19 +909,13 @@ export class NutrientClient {
    * ```
    */
   async applyXfdf(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     xfdfFile: FileInput,
     options?: {
       ignorePageRotation?: boolean;
       richTextEnabled?: boolean;
     },
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     const applyXfdfAction = BuildActions.applyXfdf(xfdfFile, options);
 
     const result = await this.workflow()
@@ -1025,19 +980,48 @@ export class NutrientClient {
    * ```
    */
   async createRedactionsAI(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     criteria: string,
     redaction_state: 'stage' | 'apply' = 'stage',
     pages?: { start?: number; end?: number },
     options?: components['schemas']['RedactData']['options'],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
+    // Build page range for API (supports negative indices natively)
+    const pageRange = pages ? { start: pages.start ?? 0, end: pages.end ?? -1 } : undefined;
 
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
+    // Check if input is a URL
+    if (isRemoteFileInput(pdf)) {
+      const url = typeof pdf === 'string' ? pdf : (pdf as UrlInput).url;
+
+      const response = await sendRequest(
+        {
+          method: 'POST',
+          endpoint: '/ai/redact',
+          data: {
+            data: {
+              documents: [
+                {
+                  file: { url },
+                  pages: pageRange,
+                },
+              ],
+              criteria,
+              redaction_state,
+              options,
+            },
+          },
+        },
+        this.options,
+        'arraybuffer',
+      );
+
+      const buffer = new Uint8Array(response.data as unknown as ArrayBuffer);
+      return { mimeType: 'application/pdf', filename: 'output.pdf', buffer };
     }
 
-    const pageCount = await getPdfPageCount(normalizedFile);
+    // Local file input - the cast to FileInput is safe because we've already
+    // handled the URL case above via isRemoteFileInput() check
+    const normalizedFile = await processFileInput(pdf as FileInput);
 
     const response = await sendRequest(
       {
@@ -1048,7 +1032,7 @@ export class NutrientClient {
             documents: [
               {
                 file: 'file',
-                pages: pages ? normalizePageParams(pages, pageCount) : undefined,
+                pages: pageRange,
               },
             ],
             criteria,
@@ -1115,7 +1099,7 @@ export class NutrientClient {
    * ```
    */
   async createRedactionsPreset(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     preset: components['schemas']['SearchPreset'],
     redaction_state: 'stage' | 'apply' = 'stage',
     pages?: { start?: number; end?: number },
@@ -1128,18 +1112,23 @@ export class NutrientClient {
       'type' | 'strategyOptions' | 'strategy'
     >,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
+    const start = pages?.start ?? 0;
+    const end = pages?.end ?? -1;
 
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
+    // Validate: negative end indices other than -1 require page count which we don't have
+    if (end < -1) {
+      throw new ValidationError(
+        'Negative end indices other than -1 are not supported for redaction page ranges',
+        { pages },
+      );
     }
-    // Get page count for handling negative indices
-    const pageCount = await getPdfPageCount(normalizedFile);
-    const normalizedPages = normalizePageParams(pages, pageCount);
+
+    // Calculate limit: if end is -1, omit limit (search to end); otherwise calculate count
+    const limit = end === -1 ? undefined : end - start + 1;
 
     const createRedactionsAction = BuildActions.createRedactionsPreset(preset, options, {
-      start: normalizedPages.start,
-      limit: normalizedPages.end >= 0 ? normalizedPages.end - normalizedPages.start + 1 : undefined,
+      start,
+      ...(limit !== undefined ? { limit } : {}),
       ...presetOptions,
     });
     const actions: ApplicableAction[] = [createRedactionsAction];
@@ -1199,7 +1188,7 @@ export class NutrientClient {
    * ```
    */
   async createRedactionsRegex(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     regex: string,
     redaction_state: 'stage' | 'apply' = 'stage',
     pages?: { start?: number; end?: number },
@@ -1212,19 +1201,23 @@ export class NutrientClient {
       'type' | 'strategyOptions' | 'strategy'
     >,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
+    const start = pages?.start ?? 0;
+    const end = pages?.end ?? -1;
 
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
+    // Validate: negative end indices other than -1 require page count which we don't have
+    if (end < -1) {
+      throw new ValidationError(
+        'Negative end indices other than -1 are not supported for redaction page ranges',
+        { pages },
+      );
     }
 
-    // Get page count for handling negative indices
-    const pageCount = await getPdfPageCount(normalizedFile);
-    const normalizedPages = normalizePageParams(pages, pageCount);
+    // Calculate limit: if end is -1, omit limit (search to end); otherwise calculate count
+    const limit = end === -1 ? undefined : end - start + 1;
 
     const createRedactionsAction = BuildActions.createRedactionsRegex(regex, options, {
-      start: normalizedPages.start,
-      limit: normalizedPages.end >= 0 ? normalizedPages.end - normalizedPages.start + 1 : undefined,
+      start,
+      ...(limit !== undefined ? { limit } : {}),
       ...regrexOptions,
     });
     const actions: ApplicableAction[] = [createRedactionsAction];
@@ -1284,7 +1277,7 @@ export class NutrientClient {
    * ```
    */
   async createRedactionsText(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     text: string,
     redaction_state: 'stage' | 'apply' = 'stage',
     pages?: { start?: number; end?: number },
@@ -1297,18 +1290,23 @@ export class NutrientClient {
       'type' | 'strategyOptions' | 'strategy'
     >,
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
+    const start = pages?.start ?? 0;
+    const end = pages?.end ?? -1;
 
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
+    // Validate: negative end indices other than -1 require page count which we don't have
+    if (end < -1) {
+      throw new ValidationError(
+        'Negative end indices other than -1 are not supported for redaction page ranges',
+        { pages },
+      );
     }
-    // Get page count for handling negative indices
-    const pageCount = await getPdfPageCount(normalizedFile);
-    const normalizedPages = normalizePageParams(pages, pageCount);
+
+    // Calculate limit: if end is -1, omit limit (search to end); otherwise calculate count
+    const limit = end === -1 ? undefined : end - start + 1;
 
     const createRedactionsAction = BuildActions.createRedactionsText(text, options, {
-      start: normalizedPages.start,
-      limit: normalizedPages.end >= 0 ? normalizedPages.end - normalizedPages.start + 1 : undefined,
+      start,
+      ...(limit !== undefined ? { limit } : {}),
       ...textOptions,
     });
     const actions: ApplicableAction[] = [createRedactionsAction];
@@ -1350,14 +1348,8 @@ export class NutrientClient {
    * fs.writeFileSync('document-with-applied-redactions.pdf', Buffer.from(result.buffer));
    * ```
    */
-  async applyRedactions(pdf: FileInput): Promise<OutputTypeMap['pdf']> {
+  async applyRedactions(pdf: FileInputWithUrl): Promise<OutputTypeMap['pdf']> {
     const applyRedactionsAction = BuildActions.applyRedactions();
-
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
 
     const result = await this.workflow()
       .addFilePart(pdf, undefined, [applyRedactionsAction])
@@ -1394,15 +1386,9 @@ export class NutrientClient {
    * ```
    */
   async flatten(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     annotationIds?: (string | number)[],
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     const flattenAction = BuildActions.flatten(annotationIds);
 
     const result = await this.workflow()
@@ -1448,36 +1434,28 @@ export class NutrientClient {
    * ```
    */
   async rotate(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     angle: 90 | 180 | 270,
     pages?: { start?: number; end?: number },
   ): Promise<OutputTypeMap['pdf']> {
     const rotateAction = BuildActions.rotate(angle);
     const workflow = this.workflow();
 
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     if (pages) {
-      const pageCount = await getPdfPageCount(normalizedFile);
-      const normalizedPages = normalizePageParams(pages, pageCount);
+      const start = pages.start ?? 0;
+      const end = pages.end ?? -1;
 
       // Add pages before the range to rotate
-      if (normalizedPages.start > 0) {
-        workflow.addFilePart(pdf, { pages: { start: 0, end: normalizedPages.start - 1 } });
+      if (start > 0) {
+        workflow.addFilePart(pdf, { pages: { start: 0, end: start - 1 } });
       }
 
       // Add the specific pages with rotation action
-      workflow.addFilePart(pdf, { pages: normalizedPages }, [rotateAction]);
+      workflow.addFilePart(pdf, { pages: { start, end } }, [rotateAction]);
 
-      // Add pages after the range to rotate
-      if (normalizedPages.end < pageCount - 1) {
-        workflow.addFilePart(pdf, {
-          pages: { start: normalizedPages.end + 1, end: pageCount - 1 },
-        });
+      // Add pages after the range to rotate (unless rotating to the last page)
+      if (end !== -1) {
+        workflow.addFilePart(pdf, { pages: { start: end + 1, end: -1 } });
       }
     } else {
       // If no pages specified, rotate the entire document
@@ -1495,6 +1473,7 @@ export class NutrientClient {
    * @param pdf - The PDF file to add pages to
    * @param count - The number of blank pages to add
    * @param index - Optional index where to add the blank pages (0-based). If not provided, pages are added at the end.
+   *                Must be non-negative. If the index exceeds the document's page count, the server will return an error.
    * @returns Promise resolving to the document with added pages
    *
    * @example
@@ -1516,51 +1495,35 @@ export class NutrientClient {
    * fs.writeFileSync('document-with-added-pages.pdf', Buffer.from(result.buffer));
    * ```
    */
-  async addPage(pdf: FileInput, count: number = 1, index?: number): Promise<OutputTypeMap['pdf']> {
+  async addPage(
+    pdf: FileInputWithUrl,
+    count: number = 1,
+    index?: number,
+  ): Promise<OutputTypeMap['pdf']> {
     let result: WorkflowResult;
 
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
-    // If no index is provided or it's the end of the document, simply add pages at the end
+    // If no index is provided, simply add pages at the end
     if (index === undefined) {
       const builder = this.workflow().addFilePart(pdf);
-
-      // Add the specified number of blank pages
       builder.addNewPage({ pageCount: count });
-
       result = await builder.outputPdf().execute();
     } else {
-      // Get the actual page count of the PDF
-
-      const pageCount = await getPdfPageCount(normalizedFile);
-
-      // Validate that the index is within range
-      if (index < 0 || index > pageCount) {
-        throw new ValidationError(
-          `Index ${index} is out of range (document has ${pageCount} pages)`,
-        );
+      if (index < 0) {
+        throw new ValidationError('Index must be a non-negative number', { index });
       }
 
       const builder = this.workflow();
 
       // Add pages before the specified index
       if (index > 0) {
-        const beforePages = normalizePageParams({ start: 0, end: index - 1 }, pageCount);
-        builder.addFilePart(pdf, { pages: beforePages });
+        builder.addFilePart(pdf, { pages: { start: 0, end: index - 1 } });
       }
 
       // Add the blank pages
       builder.addNewPage({ pageCount: count });
 
-      // Add pages after the specified index
-      if (index < pageCount) {
-        const afterPages = normalizePageParams({ start: index, end: pageCount - 1 }, pageCount);
-        builder.addFilePart(pdf, { pages: afterPages });
-      }
+      // Add pages after the specified index (from index to end)
+      builder.addFilePart(pdf, { pages: { start: index, end: -1 } });
 
       result = await (builder as WorkflowWithPartsStage).outputPdf().execute();
     }
@@ -1590,7 +1553,7 @@ export class NutrientClient {
    * fs.writeFileSync('merged-document.pdf', Buffer.from(result.buffer));
    * ```
    */
-  async merge(files: FileInput[]): Promise<OutputTypeMap['pdf']> {
+  async merge(files: FileInputWithUrl[]): Promise<OutputTypeMap['pdf']> {
     if (!files || files.length < 2) {
       throw new ValidationError('At least 2 files are required for merge operation');
     }
@@ -1637,38 +1600,22 @@ export class NutrientClient {
    * ```
    */
   async split(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     pageRanges: { start?: number; end?: number }[],
   ): Promise<OutputTypeMap['pdf'][]> {
     if (!pageRanges || pageRanges.length === 0) {
       throw new ValidationError('At least one page range is required for splitting');
     }
 
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
-    // Get the actual page count of the PDF
-    const pageCount = await getPdfPageCount(normalizedFile);
-
-    // Normalize and validate all page ranges
-    const normalizedRanges = pageRanges.map((range) => normalizePageParams(range, pageCount));
-
-    // Validate that all page ranges are within bounds
-    for (const range of normalizedRanges) {
-      if (range.start > range.end) {
-        throw new ValidationError(`Page range ${JSON.stringify(range)} is invalid (start > end)`);
-      }
-    }
-
     // Create a separate workflow for each page range
+    // The API natively supports negative indices (e.g., -1 = last page)
     const workflows: Promise<WorkflowResult>[] = [];
 
-    for (const range of normalizedRanges) {
+    for (const range of pageRanges) {
       const builder = this.workflow();
-      builder.addFilePart(pdf, { pages: range });
+      builder.addFilePart(pdf, {
+        pages: { start: range.start ?? 0, end: range.end ?? -1 },
+      });
       workflows.push((builder as WorkflowWithPartsStage).outputPdf().execute());
     }
 
@@ -1706,43 +1653,20 @@ export class NutrientClient {
    * const result = await client.duplicatePages('document.pdf', [-1, -2, -3]);
    * ```
    */
-  async duplicatePages(pdf: FileInput, pageIndices: number[]): Promise<OutputTypeMap['pdf']> {
+  async duplicatePages(
+    pdf: FileInputWithUrl,
+    pageIndices: number[],
+  ): Promise<OutputTypeMap['pdf']> {
     if (!pageIndices || pageIndices.length === 0) {
       throw new ValidationError('At least one page index is required for duplication');
-    }
-
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
-    // Get the actual page count of the PDF
-    const pageCount = await getPdfPageCount(normalizedFile);
-
-    // Normalize negative indices
-    const normalizedIndices = pageIndices.map((index) => {
-      if (index < 0) {
-        // Handle negative indices (e.g., -1 is the last page)
-        return pageCount + index;
-      }
-      return index;
-    });
-
-    // Validate that all page indices are within range
-    if (normalizedIndices.some((index) => index < 0 || index >= pageCount)) {
-      throw new ValidationError(
-        `Page indices ${pageIndices.toString()} are out of range (document has ${pageCount} pages)`,
-      );
     }
 
     const builder = this.workflow();
 
     // Add each page in the order specified
-    for (const pageIndex of normalizedIndices) {
-      // Use normalizePageParams to ensure consistent handling
-      const pageRange = normalizePageParams({ start: pageIndex, end: pageIndex });
-      builder.addFilePart(pdf, { pages: pageRange });
+    // The API natively supports negative indices (e.g., -1 = last page)
+    for (const pageIndex of pageIndices) {
+      builder.addFilePart(pdf, { pages: { start: pageIndex, end: pageIndex } });
     }
 
     const result = await (builder as WorkflowWithPartsStage).outputPdf().execute();
@@ -1780,66 +1704,77 @@ export class NutrientClient {
    * fs.writeFileSync('modified-document.pdf', Buffer.from(result.buffer));
    * ```
    */
-  async deletePages(pdf: FileInput, pageIndices: number[]): Promise<OutputTypeMap['pdf']> {
+  async deletePages(
+    pdf: FileInputWithUrl,
+    pageIndices: number[],
+  ): Promise<OutputTypeMap['pdf']> {
     if (!pageIndices || pageIndices.length === 0) {
       throw new ValidationError('At least one page index is required for deletion');
     }
 
-    const normalizedFile = await this.normalizeFileInput(pdf);
+    // Algorithm overview:
+    // We build "keep ranges" (pages to retain) by finding gaps between deleted indices.
+    // The API supports negative indices (-1 = last page, -2 = second-to-last, etc.)
+    //
+    // Examples:
+    // - deletePages(pdf, [1, 3]) on 5-page doc → keep [0-0], [2-2], [4 to -1]
+    // - deletePages(pdf, [0, -1]) → delete first and last → keep [1 to -2]
+    // - deletePages(pdf, [-3, -1]) → delete pages -3 and -1 → keep [0 to -4], [-2 to -2]
 
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
-    // Get the actual page count of the PDF
-    const pageCount = await getPdfPageCount(normalizedFile);
-
-    // Normalize negative indices
-    const normalizedIndices = pageIndices.map((index) => {
-      if (index < 0) {
-        // Handle negative indices (e.g., -1 is the last page)
-        return pageCount + index;
-      }
-      return index;
-    });
-
-    // Remove duplicates and sort the deleteIndices
-    const deleteIndices = [...new Set(normalizedIndices)].sort((a, b) => a - b);
-
-    // Validate that all page indices are within range
-    if (deleteIndices.some((index) => index < 0 || index >= pageCount)) {
-      throw new ValidationError(
-        `Page indices ${pageIndices.toString()} are out of range (document has ${pageCount} pages)`,
-      );
-    }
+    // Separate positive and negative indices (they're handled differently)
+    const positiveDeletes = [...new Set(pageIndices.filter((i) => i >= 0))].sort((a, b) => a - b);
+    const negativeDeletes = [...new Set(pageIndices.filter((i) => i < 0))].sort((a, b) => a - b);
 
     const builder = this.workflow();
+    const keepRanges: { start: number; end: number }[] = [];
 
-    // Group consecutive pages that should be kept into ranges
-    let currentPage: number = 0;
-    const pageRanges: { start: number; end: number }[] = [];
+    // Determine the end boundary for positive ranges:
+    // - If we have negative deletes (e.g., -3), positive ranges must end before them (at -4)
+    // - If no negative deletes, positive ranges extend to end of document (-1)
+    const endBoundary = negativeDeletes.length > 0 ? negativeDeletes[0]! - 1 : -1;
 
-    for (const deleteIndex of deleteIndices) {
+    // Build keep ranges from positive deletions
+    // Walk through sorted positive indices and create ranges for gaps
+    let currentPage = 0;
+    for (const deleteIndex of positiveDeletes) {
       if (currentPage < deleteIndex) {
-        pageRanges.push(normalizePageParams({ start: currentPage, end: deleteIndex - 1 }));
+        keepRanges.push({ start: currentPage, end: deleteIndex - 1 });
       }
       currentPage = deleteIndex + 1;
     }
 
-    if (
-      (currentPage > 0 || (currentPage == 0 && deleteIndices.length == 0)) &&
-      currentPage < pageCount
-    ) {
-      pageRanges.push(normalizePageParams({ start: currentPage, end: pageCount - 1 }));
+    // Add the final range from last deleted positive to the end boundary
+    // This captures everything between positive deletes and negative deletes
+    keepRanges.push({ start: currentPage, end: endBoundary });
+
+    // Build keep ranges for gaps between negative deletions
+    // e.g., if deleting [-3, -1], there's a gap at -2 we need to keep
+    // Negative indices are sorted ascending: [-3, -2, -1] so we look for gaps
+    for (let i = 0; i < negativeDeletes.length - 1; i++) {
+      const current = negativeDeletes[i]!;
+      const next = negativeDeletes[i + 1]!;
+      if (next - current > 1) {
+        // There's a gap between these negative indices (e.g., -3 to -1 has gap at -2)
+        keepRanges.push({ start: current + 1, end: next - 1 });
+      }
     }
 
-    if (pageRanges.length === 0) {
+    // Filter out invalid ranges where start > end (only for positive indices)
+    // Ranges with negative end are valid - the API will resolve them
+    const validRanges = keepRanges.filter((range) => {
+      if (range.start >= 0 && range.end >= 0) {
+        return range.start <= range.end;
+      }
+      return true;
+    });
+
+    if (validRanges.length === 0) {
       throw new ValidationError('You cannot delete all pages from a document');
     }
 
-    pageRanges.forEach((range) => {
+    for (const range of validRanges) {
       builder.addFilePart(pdf, { pages: range });
-    });
+    }
 
     const result = await (builder as WorkflowWithPartsStage).outputPdf().execute();
     return this.processTypedWorkflowResult(result);
@@ -1863,15 +1798,9 @@ export class NutrientClient {
    * ```
    */
   async optimize(
-    pdf: FileInput,
+    pdf: FileInputWithUrl,
     options: components['schemas']['OptimizePdf'] = { imageOptimizationQuality: 2 },
   ): Promise<OutputTypeMap['pdf']> {
-    const normalizedFile = await this.normalizeFileInput(pdf);
-
-    if (!(await isValidPdf(normalizedFile))) {
-      throw new ValidationError('Invalid pdf file', { input: pdf });
-    }
-
     const result = await this.workflow()
       .addFilePart(pdf)
       .outputPdf({ optimize: options })

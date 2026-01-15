@@ -67,21 +67,32 @@ const client = new NutrientClient({
 });
 ```
 
-### URL Fetching (SSRF Protection)
+### Working with URLs
 
-By default, the SDK blocks automatic fetching of content from URLs to protect against Server-Side Request Forgery (SSRF) attacks. To enable URL fetching for trusted sources:
+Most methods accept URLs directly. The URL is passed to the server, which fetches the content—this avoids SSRF vulnerabilities since the client never fetches URLs itself.
 
 ```typescript
-const client = new NutrientClient({
-  apiKey: 'nutr_sk_your_secret_key',
-  allowUrlFetch: true  // Enable URL fetching (use with caution)
-});
+// Pass URL as a string
+const result = await client.convert('https://example.com/document.pdf', 'docx');
 
-// Now you can pass URLs directly
-const result = await client.convert('https://trusted-source.com/document.pdf', 'pdf');
+// Or as an object (useful for TypeScript type narrowing)
+const result = await client.convert({ type: 'url', url: 'https://example.com/document.pdf' }, 'docx');
+
+// URLs also work with the workflow builder
+const result = await client.workflow()
+  .addFilePart('https://example.com/document.pdf')
+  .outputPdf()
+  .execute();
 ```
 
-**⚠️ Security Warning:** Only enable `allowUrlFetch` if you control the URLs being processed. Never enable it when processing untrusted user input.
+**Exception:** The `sign()` method only accepts local files (file paths, Buffers, streams) because the underlying API endpoint doesn't support URL inputs. For signing remote files, fetch the content first:
+
+```typescript
+// Fetch and pass the bytes for signing
+const response = await fetch('https://example.com/document.pdf');
+const buffer = Buffer.from(await response.arrayBuffer());
+const result = await client.sign(buffer, { /* signature options */ });
+```
 
 ## Direct Methods
 
