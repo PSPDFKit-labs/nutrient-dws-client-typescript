@@ -34,6 +34,10 @@ or
 yarn add @nutrient-sdk/dws-client-typescript
 ```
 
+## Migration Guides
+
+- v2.0.0: See `docs/MIGRATION.md` for URL input changes and `sign()` restrictions.
+
 ## Integration with Coding Agents
 
 This package has built-in support with popular coding agents like Claude Code, GitHub Copilot, Cursor, and Windsurf by exposing scripts that will inject rules instructing the coding agents on how to use the package. This ensures that the coding agent doesn't hallucinate documentation, as well as making full use of all the features offered in Nutrient DWS TypeScript Client.
