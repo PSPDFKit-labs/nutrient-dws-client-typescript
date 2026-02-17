@@ -1,15 +1,15 @@
 ---
-name: nutrient-document-tasks
-description: Execute common document-processing tasks with @nutrient-sdk/dws-client-typescript in Node.js scripts. Use when the user asks to convert, merge, split, OCR, extract text/tables/key-value pairs, watermark, redact, sign, optimize, protect, or reorder PDF content, or when they need a custom multi-step document pipeline script built from Nutrient DWS workflow actions.
+name: nutrient-document-processor-api
+description: Execute common document-processing tasks with @nutrient-sdk/dws-client-typescript in Node.js scripts. Use when the user asks to convert, merge, split, OCR, extract text/tables/key-value pairs, watermark, redact, sign, optimize, protect, or reorder Document content, or when they need a custom multi-step document pipeline script built from Nutrient DWS workflow actions.
 ---
 
-# Nutrient Document Tasks
+# Nutrient Document Processor API
 
 ## Quick Start
 
 1. Ensure Node.js 18+ is available.
 2. Install the latest client package in the target project:
-   - `node skills/nutrient-document-tasks/scripts/setup-latest-client.mjs npm`
+  - `node skills/nutrient-document-processor-api/scripts/setup-latest-client.mjs npm`
 3. Export the API key before running scripts:
    - `export NUTRIENT_API_KEY="nutr_sk_..."`
 4. Run task scripts with `node` from the repository root.
