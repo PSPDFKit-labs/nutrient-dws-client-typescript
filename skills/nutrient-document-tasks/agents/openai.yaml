@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nutrient DWS Doc Ops"
+  short_description: "Run common document automation scripts with Nutrient DWS"
+  default_prompt: "Use this skill to run existing scripts or generate new script-based document pipelines with @nutrient-sdk/dws-client-typescript."
