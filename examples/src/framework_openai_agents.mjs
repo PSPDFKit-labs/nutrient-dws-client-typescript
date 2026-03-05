@@ -1,8 +1,18 @@
+import "dotenv/config";
 import { NutrientClient } from "@nutrient-sdk/dws-client-typescript";
 import { Agent, Runner, tool } from "@openai/agents";
 
+const nutrientApiKey = process.env.NUTRIENT_API_KEY;
+if (!nutrientApiKey) {
+  throw new Error("Missing NUTRIENT_API_KEY. Add it to examples/.env before running.");
+}
+
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error("Missing OPENAI_API_KEY. Add it to examples/.env before running.");
+}
+
 const client = new NutrientClient({
-  apiKey: process.env.NUTRIENT_API_KEY ?? "nutr_sk_placeholder",
+  apiKey: nutrientApiKey,
 });
 
 const extractText = tool({

@@ -99,7 +99,7 @@ To run framework integration sketches:
 Install optional framework dependencies first:
 
 ```bash
-npm install @openai/agents @langchain/openai @langchain/core
+npm install @openai/agents @langchain/openai @langchain/core zod
 ```
 
 ```bash
