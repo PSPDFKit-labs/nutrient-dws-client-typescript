@@ -8,6 +8,9 @@ This example project demonstrates how to use the Nutrient DWS TypeScript Client 
 - `src/` - Contains TypeScript source files
   - `direct_method.ts` - Examples using direct method calls
   - `workflow.ts` - Examples using the workflow builder pattern
+  - `framework_openai_agents.mjs` - OpenAI Agents integration sketch
+  - `framework_langchain.mjs` - LangChain integration sketch
+  - `framework_crewai_scope.md` - CrewAI scope note for TypeScript users
 - `output/` - Directory where processed files will be saved
 - `.env.example` - Example environment variables file
 
@@ -88,6 +91,31 @@ This will:
 2. Create a document merging with watermark workflow
 3. Extract text with JSON output
 4. Execute a complex multi-step workflow
+
+### Framework Examples
+
+To run framework integration sketches:
+
+Install optional framework dependencies first:
+
+```bash
+npm install @openai/agents @langchain/openai @langchain/core
+```
+
+```bash
+node src/framework_openai_agents.mjs
+node src/framework_langchain.mjs
+```
+
+Syntax-check:
+
+```bash
+node --check src/framework_openai_agents.mjs
+node --check src/framework_langchain.mjs
+```
+
+CrewAI note:
+- CrewAI is Python-native. See `src/framework_crewai_scope.md` for a recommended bridge pattern when your app stack is TypeScript-first.
 
 ## Output
 
