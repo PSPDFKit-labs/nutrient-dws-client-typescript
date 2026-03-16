@@ -71,6 +71,21 @@ const client = new NutrientClient({
 });
 ```
 
+## Framework Quickstarts
+
+Framework wiring examples are available in `examples/src/`:
+
+- `framework_openai_agents.mjs`
+- `framework_langchain.mjs`
+- `framework_crewai_scope.md` (CrewAI scope note for TypeScript users)
+
+Syntax-check commands:
+
+```bash
+node --check examples/src/framework_openai_agents.mjs
+node --check examples/src/framework_langchain.mjs
+```
+
 ### Working with URLs
 
 Most methods accept URLs directly. The URL is passed to the server, which fetches the content—this avoids SSRF vulnerabilities since the client never fetches URLs itself.
