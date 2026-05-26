@@ -8,12 +8,16 @@ import type {
   OutputTypeMap,
   WorkflowResult,
   UrlInput,
+  ParseInstructions,
+  ParseOptions,
+  ParseResponse,
+  ParseElement,
 } from './types';
 import { ValidationError, NutrientError } from './errors';
 import { workflow } from './workflow';
 import type { components, operations } from './generated/api-types';
 import { BuildActions } from './build';
-import { processFileInput, isRemoteFileInput } from './inputs';
+import { processFileInput, isRemoteFileInput, getRemoteUrl } from './inputs';
 import { sendRequest } from './http';
 import type { NormalizedFileData } from './inputs';
 import type { ApplicableAction } from './builders/workflow';
@@ -1704,10 +1708,7 @@ export class NutrientClient {
    * fs.writeFileSync('modified-document.pdf', Buffer.from(result.buffer));
    * ```
    */
-  async deletePages(
-    pdf: FileInputWithUrl,
-    pageIndices: number[],
-  ): Promise<OutputTypeMap['pdf']> {
+  async deletePages(pdf: FileInputWithUrl, pageIndices: number[]): Promise<OutputTypeMap['pdf']> {
     if (!pageIndices || pageIndices.length === 0) {
       throw new ValidationError('At least one page index is required for deletion');
     }
@@ -1807,5 +1808,177 @@ export class NutrientClient {
       .outputPdf({ optimize: options })
       .execute();
     return this.processTypedWorkflowResult(result);
+  }
+
+  /**
+   * Extracts structured content from a document via the Nutrient Data Extraction API
+   * (`POST /extraction/parse`).
+   *
+   * Four processing modes are available, each billed against the account's
+   * **extraction credits** bucket (a separate billing bucket from the
+   * **processor API credits** used by the rest of `NutrientClient`):
+   *
+   * - `text` — Plain text extraction. Markdown output only. 1 extraction credit/page.
+   * - `structure` — OCR-backed structured extraction with spatial elements. 1.5 extraction credits/page.
+   * - `understand` — Deeper document analysis with semantic enrichment. 9 extraction credits/page. (Default)
+   * - `agentic` — VLM-augmented extraction for complex documents. 18 extraction credits/page.
+   *
+   * Two output formats:
+   * - `spatial` (default for `structure`/`understand`/`agentic`) — Typed elements
+   *   with bounds, confidence, reading order, and page refs.
+   * - `markdown` (default for `text`) — Whole-document Markdown for RAG and search.
+   *
+   * @param input - The document to parse. Accepts local files, buffers, streams, or a URL.
+   * @param options - Optional parse configuration (mode, output format, language, API version).
+   * @returns Promise resolving to the `/extraction/parse` response. Narrow on
+   *          `output.markdown` / `output.elements` for type-safe field access, or
+   *          read `configuration.outputFormat` for the server-resolved value.
+   *
+   * @example
+   * ```typescript
+   * // Whole-document Markdown for a RAG pipeline (cheapest mode).
+   * const md = await client.parse('invoice.pdf', { mode: 'text' });
+   * if (md.output.markdown !== undefined) {
+   *   console.log(md.output.markdown);
+   * }
+   *
+   * // Spatial elements for a born-OCR scan.
+   * const spatial = await client.parse('scan.pdf', {
+   *   mode: 'structure',
+   *   output: { format: 'spatial', includeWords: true },
+   *   language: ['eng', 'spa'],
+   * });
+   * if (spatial.output.elements !== undefined) {
+   *   for (const el of spatial.output.elements) {
+   *     if (el.type === 'paragraph') console.log(el.text);
+   *   }
+   * }
+   *
+   * // Parse a remote document (URL input).
+   * const remote = await client.parse('https://example.com/doc.pdf');
+   *
+   * // Cost reporting — extraction credits, not processor API credits.
+   * console.log('Extraction credits used:', remote.usage?.data_extraction_credits?.cost);
+   *
+   * // Or skip the discriminant entirely with the convenience wrappers:
+   * const justMarkdown = await client.parseToMarkdown('invoice.pdf');
+   * const justElements = await client.parseElements('scan.pdf', 'understand');
+   * ```
+   */
+  async parse(input: FileInputWithUrl, options?: ParseOptions): Promise<ParseResponse> {
+    const instructions: ParseInstructions = {};
+    if (options?.mode !== undefined) instructions.mode = options.mode;
+    if (options?.output !== undefined) instructions.output = options.output;
+    if (options?.language !== undefined) {
+      instructions.options = { language: options.language };
+    }
+
+    const headers: Record<string, string> | undefined =
+      options?.apiVersion !== undefined
+        ? { 'x-nutrient-api-version': options.apiVersion }
+        : undefined;
+
+    // URL input → JSON body
+    const remoteUrl = getRemoteUrl(input);
+    if (remoteUrl !== null) {
+      instructions.url = remoteUrl;
+      const response = await sendRequest(
+        {
+          method: 'POST',
+          endpoint: '/extraction/parse',
+          data: { instructions },
+          ...(headers ? { headers } : {}),
+        },
+        this.options,
+        'json',
+      );
+      return response.data;
+    }
+
+    // Local file input → multipart upload
+    const normalizedFile = await processFileInput(input as FileInput);
+    const response = await sendRequest(
+      {
+        method: 'POST',
+        endpoint: '/extraction/parse',
+        data: { instructions, file: normalizedFile },
+        ...(headers ? { headers } : {}),
+      },
+      this.options,
+      'json',
+    );
+    return response.data;
+  }
+
+  /**
+   * Convenience wrapper around {@link NutrientClient.parse} that returns the
+   * whole-document Markdown directly. Billed against **extraction credits**
+   * (1 credit/page for `text`, 1.5 for `structure`, 9 for `understand`, 18 for
+   * `agentic`).
+   *
+   * @param input - The document to parse.
+   * @param mode - Processing mode (defaults to `'text'` for cheapest Markdown extraction).
+   * @returns Promise resolving to the Markdown string.
+   *
+   * @example
+   * ```typescript
+   * const markdown = await client.parseToMarkdown('document.pdf');
+   * console.log(markdown);
+   * ```
+   */
+  async parseToMarkdown(
+    input: FileInputWithUrl,
+    mode: ParseOptions['mode'] = 'text',
+  ): Promise<string> {
+    const result = await this.parse(input, {
+      mode,
+      output: { format: 'markdown' },
+    });
+    if (result.output.markdown === undefined) {
+      throw new NutrientError(
+        'parseToMarkdown expected markdown output, server returned ' +
+          result.configuration.outputFormat,
+        'PARSE_OUTPUT_MISMATCH',
+        { configuration: result.configuration as unknown as Record<string, unknown> },
+      );
+    }
+    return result.output.markdown;
+  }
+
+  /**
+   * Convenience wrapper around {@link NutrientClient.parse} that returns the
+   * spatial elements array directly. Not available with `mode: 'text'`.
+   * Billed against **extraction credits** (1.5/page for `structure`, 9 for
+   * `understand`, 18 for `agentic`).
+   *
+   * @param input - The document to parse.
+   * @param mode - Processing mode (defaults to `'structure'`). Must not be `'text'`.
+   * @param includeWords - Include word-level OCR data inside paragraphs and table cells.
+   * @returns Promise resolving to the array of spatial elements.
+   *
+   * @example
+   * ```typescript
+   * const elements = await client.parseElements('scan.pdf', 'understand');
+   * const tables = elements.filter(e => e.type === 'table');
+   * ```
+   */
+  async parseElements(
+    input: FileInputWithUrl,
+    mode: Exclude<ParseOptions['mode'], 'text'> = 'structure',
+    includeWords = false,
+  ): Promise<ParseElement[]> {
+    const result = await this.parse(input, {
+      mode,
+      output: { format: 'spatial', includeWords },
+    });
+    if (result.output.elements === undefined) {
+      throw new NutrientError(
+        'parseElements expected spatial output, server returned ' +
+          result.configuration.outputFormat,
+        'PARSE_OUTPUT_MISMATCH',
+        { configuration: result.configuration as unknown as Record<string, unknown> },
+      );
+    }
+    return result.output.elements;
   }
 }
