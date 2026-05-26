@@ -1,0 +1,1132 @@
+openapi: 3.1.0
+info:
+  version: '2026-05-25'
+  title: Nutrient Data Extraction API
+  description: |-
+    Nutrient Data Extraction API is an HTTP API that extracts structured content from documents.
+    Upload a PDF or image and receive extracted text elements, tables, formulas, key-value pairs,
+    and other structural elements with spatial data — or get a whole-document markdown representation.
+
+    Four processing modes are available: choose `text` for plain text, `structure` for OCR-backed structure,
+    `understand` for deeper document analysis, or `agentic` for complex documents that need visual reasoning
+    and self-correction.
+
+    # API Versioning
+
+    Nutrient Data Extraction API is versioned using date-based versions in the form `YYYY-MM-DD` (for example, `2026-05-25`).
+
+    Requests can override the API key's default version by sending the `x-nutrient-api-version` header. If the header is omitted, the request uses the latest version that was available when the API key was created.
+
+    Supported API versions:
+
+    | Version      | Status  | Notes                                                              |
+    | ------------ | ------- | ------------------------------------------------------------------ |
+    | `2026-05-25` | Current | Initial Data Extraction versioned contract. No older versions yet. |
+  contact:
+    name: Nutrient Data Extraction API
+    url: https://www.nutrient.io/api/
+  license:
+    name: End User License Agreement
+    url: https://www.nutrient.io/api/terms/
+servers:
+  - url: https://api.nutrient.io
+    description: Base URL for Nutrient Data Extraction API endpoints.
+security:
+  - BearerToken: []
+tags:
+  - name: Authorization
+    description: |-
+      Nutrient Data Extraction API uses an HTTP authorization header to map each request to the user making the request. You're required to provide your API token in the authorization header with each request. Otherwise, the API will return an error.
+
+      The authorization header has the following shape:
+
+      ```
+      Authorization: Bearer pdf_live<rest_of_api_key>
+      ```
+
+      `pdf_live<rest_of_api_key>` is an API key that can be retrieved by logging in to the [Data Extraction API dashboard](https://www.nutrient.io/data-extraction/api_keys/).
+
+      Because this API allows full access to credits you purchased for the Data Extraction API, it's only meant to be used by your backend services, which we assume are fully trusted.
+  - name: Data Extraction
+    description: Extract structured content from documents.
+  - name: File Type Support
+    description: |-
+      DWS Data Extraction API supports importing documents in different file formats:
+
+      * PDFs
+      * Image documents
+      * Office files (Word, Excel, PowerPoint etc.)
+
+      The following table shows the allowed file extensions and their MIME types:
+
+      | File Extension | MIME Type                                                                 |
+      | -------------- | ------------------------------------------------------------------------- |
+      | PDF            | application/pdf                                                           |
+      | DOC            | application/msword                                                        |
+      | DOCX           | application/vnd.openxmlformats-officedocument.wordprocessingml.document   |
+      | DOCM           | application/vnd.ms-word.document.macroEnabled.12                          |
+      | DOTX           | application/vnd.openxmlformats-officedocument.wordprocessingml.template   |
+      | DOTM           | application/vnd.ms-word.template.macroEnabled.12                          |
+      | XLS            | application/vnd.ms-excel                                                  |
+      | XLSX           | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet         |
+      | XLSM           | application/vnd.ms-excel.sheet.macroEnabled.12                            |
+      | XLSB           | application/vnd.ms-excel.sheet.binary.macroEnabled.12                     |
+      | XLTX           | application/vnd.openxmlformats-officedocument.spreadsheetml.template      |
+      | XLTM           | application/vnd.ms-excel.template.macroEnabled.12                         |
+      | XLAM           | application/vnd.ms-excel.addin.macroEnabled.12                            |
+      | PPT, PPS       | application/vnd.ms-powerpoint                                             |
+      | PPTX           | application/vnd.openxmlformats-officedocument.presentationml.presentation |
+      | PPTM           | application/vnd.ms-powerpoint.presentation.macroEnabled.12                |
+      | PPSX           | application/vnd.openxmlformats-officedocument.presentationml.slideshow    |
+      | PPSM           | application/vnd.ms-powerpoint.slideshow.macroEnabled.12                   |
+      | POTX           | application/vnd.openxmlformats-officedocument.presentationml.template     |
+      | POTM           | application/vnd.ms-powerpoint.template.macroEnabled.12                    |
+      | PPAM           | application/vnd.ms-powerpoint.addin.macroEnabled.12                       |
+      | RTF            | application/rtf                                                           |
+      | ODT            | application/vnd.oasis.opendocument.text                                   |
+      | TXT            | text/plain                                                                |
+      | BMP            | image/bmp                                                                 |
+      | JPG/JPEG       | image/jpeg                                                                |
+      | PNG            | image/png                                                                 |
+      | TIFF           | image/tiff                                                                |
+      | HEIC           | image/heic                                                                |
+      | GIF            | image/gif                                                                 |
+      | WEBP           | image/webp                                                                |
+      | SVG            | image/svg+xml                                                             |
+      | TGA            | image/x-tga                                                               |
+      | EPS            | image/postscript                                                          |
+  - name: OCR Language Support
+    description: |-
+      The OCR action supports a wide range of languages for text extraction. You can specify languages using either:
+      - **Full language name** (lowercase, e.g., `english`, `german`) - available for commonly used languages
+      - **ISO 639-2 language code** (e.g., `eng`, `deu`) - available for all languages
+      - **ISO 639-2 language code with variant** (e.g., `chi_sim_vert` or `deu_frak`)
+
+      | Description                      | Language code  | Full language name |
+      | -------------------------------- | -------------- | ------------------ |
+      | Afrikaans                        | `afr`          |                    |
+      | Albanian                         | `sqi`          |                    |
+      | Amharic                          | `amh`          |                    |
+      | Arabic                           | `ara`          |                    |
+      | Armenian                         | `hye`          |                    |
+      | Assamese                         | `asm`          |                    |
+      | Azerbaijani                      | `aze`          |                    |
+      | Azerbaijani - Cyrillic           | `aze_cyrl`     |                    |
+      | Basque                           | `eus`          |                    |
+      | Belarusian                       | `bel`          |                    |
+      | Bengali                          | `ben`          |                    |
+      | Bosnian                          | `bos`          |                    |
+      | Breton                           | `bre`          |                    |
+      | Bulgarian                        | `bul`          |                    |
+      | Burmese                          | `mya`          |                    |
+      | Catalan; Valencian               | `cat`          |                    |
+      | Cebuano                          | `ceb`          |                    |
+      | Central Khmer                    | `khm`          |                    |
+      | Cherokee                         | `chr`          |                    |
+      | Chinese - Simplified             | `chi_sim`      |                    |
+      | Chinese - Simplified (Vertical)  | `chi_sim_vert` |                    |
+      | Chinese - Traditional            | `chi_tra`      |                    |
+      | Chinese - Traditional (Vertical) | `chi_tra_vert` |                    |
+      | Corsican                         | `cos`          |                    |
+      | Croatian                         | `hrv`          | `croatian`         |
+      | Czech                            | `ces`          | `czech`            |
+      | Danish                           | `dan`          | `danish`           |
+      | Danish - Fraktur                 | `dan_frak`     |                    |
+      | Dhivehi; Maldivian               | `div`          |                    |
+      | Dutch; Flemish                   | `nld`          | `dutch`            |
+      | Dzongkha                         | `dzo`          |                    |
+      | English                          | `eng`          | `english`          |
+      | English, Middle (1100-1500)      | `enm`          |                    |
+      | Esperanto                        | `epo`          |                    |
+      | Estonian                         | `est`          |                    |
+      | Faroese                          | `fao`          |                    |
+      | Filipino                         | `fil`          |                    |
+      | Finnish                          | `fin`          | `finnish`          |
+      | French                           | `fra`          | `french`           |
+      | French, Middle (ca. 1400-1600)   | `frm`          |                    |
+      | Galician                         | `glg`          |                    |
+      | Georgian                         | `kat`          |                    |
+      | Georgian - Old                   | `kat_old`      |                    |
+      | German                           | `deu`          | `german`           |
+      | German - Fraktur                 | `deu_frak`     |                    |
+      | German Fraktur                   | `frk`          |                    |
+      | Greek, Ancient                   | `grc`          |                    |
+      | Greek, Modern                    | `ell`          |                    |
+      | Gujarati                         | `guj`          |                    |
+      | Haitian; Haitian Creole          | `hat`          |                    |
+      | Hebrew                           | `heb`          |                    |
+      | Hindi                            | `hin`          |                    |
+      | Hungarian                        | `hun`          |                    |
+      | Icelandic                        | `isl`          |                    |
+      | Indonesian                       | `ind`          | `indonesian`       |
+      | Inuktitut                        | `iku`          |                    |
+      | Irish                            | `gle`          |                    |
+      | Italian                          | `ita`          | `italian`          |
+      | Italian - Old                    | `ita_old`      |                    |
+      | Japanese                         | `jpn`          |                    |
+      | Japanese (Vertical)              | `jpn_vert`     |                    |
+      | Javanese                         | `jav`          |                    |
+      | Kannada                          | `kan`          |                    |
+      | Kazakh                           | `kaz`          |                    |
+      | Kirghiz; Kyrgyz                  | `kir`          |                    |
+      | Korean                           | `kor`          |                    |
+      | Korean (Vertical)                | `kor_vert`     |                    |
+      | Kurdish                          | `kur`          |                    |
+      | Kurmanji (Kurdish)               | `kmr`          |                    |
+      | Lao                              | `lao`          |                    |
+      | Latin                            | `lat`          |                    |
+      | Latvian                          | `lav`          |                    |
+      | Lithuanian                       | `lit`          |                    |
+      | Luxembourgish                    | `ltz`          |                    |
+      | Macedonian                       | `mkd`          |                    |
+      | Malay                            | `msa`          | `malay`            |
+      | Malayalam                        | `mal`          |                    |
+      | Maltese                          | `mlt`          |                    |
+      | Maori                            | `mri`          |                    |
+      | Marathi                          | `mar`          |                    |
+      | Math/Equation detection          | `equ`          |                    |
+      | Mongolian                        | `mon`          |                    |
+      | Nepali                           | `nep`          |                    |
+      | Norwegian                        | `nor`          | `norwegian`        |
+      | Occitan                          | `oci`          |                    |
+      | Oriya                            | `ori`          |                    |
+      | Panjabi; Punjabi                 | `pan`          |                    |
+      | Persian                          | `fas`          |                    |
+      | Polish                           | `pol`          | `polish`           |
+      | Portuguese                       | `por`          | `portuguese`       |
+      | Pushto; Pashto                   | `pus`          |                    |
+      | Quechua                          | `que`          |                    |
+      | Romanian; Moldavian              | `ron`          |                    |
+      | Russian                          | `rus`          |                    |
+      | Sanskrit                         | `san`          |                    |
+      | Scottish Gaelic                  | `gla`          |                    |
+      | Serbian                          | `srp`          | `serbian`          |
+      | Serbian - Latin                  | `srp_latn`     |                    |
+      | Sindhi                           | `snd`          |                    |
+      | Sinhala; Sinhalese               | `sin`          |                    |
+      | Slovak                           | `slk`          | `slovak`           |
+      | Slovak - Fraktur                 | `slk_frak`     |                    |
+      | Slovenian                        | `slv`          | `slovenian`        |
+      | Spanish; Castilian               | `spa`          | `spanish`          |
+      | Spanish - Old                    | `spa_old`      |                    |
+      | Sundanese                        | `sun`          |                    |
+      | Swahili                          | `swa`          |                    |
+      | Swedish                          | `swe`          | `swedish`          |
+      | Syriac                           | `syr`          |                    |
+      | Tagalog                          | `tgl`          |                    |
+      | Tajik                            | `tgk`          |                    |
+      | Tamil                            | `tam`          |                    |
+      | Tatar                            | `tat`          |                    |
+      | Telugu                           | `tel`          |                    |
+      | Thai                             | `tha`          |                    |
+      | Tibetan                          | `bod`          |                    |
+      | Tigrinya                         | `tir`          |                    |
+      | Tonga                            | `ton`          |                    |
+      | Turkish                          | `tur`          | `turkish`          |
+      | Uighur; Uyghur                   | `uig`          |                    |
+      | Ukrainian                        | `ukr`          |                    |
+      | Urdu                             | `urd`          |                    |
+      | Uzbek                            | `uzb`          |                    |
+      | Uzbek - Cyrillic                 | `uzb_cyrl`     |                    |
+      | Vietnamese                       | `vie`          |                    |
+      | Welsh                            | `cym`          |                    |
+      | Western Frisian                  | `fry`          |                    |
+      | Yiddish                          | `yid`          |                    |
+      | Yoruba                           | `yor`          |                    |
+externalDocs:
+  description: Nutrient Data Extraction API guides
+  url: https://www.nutrient.io/guides/data-extraction/
+paths:
+  /extraction/parse:
+    post:
+      summary: Extract data from a document
+      operationId: extraction-parse
+      parameters:
+        - $ref: '#/components/parameters/NutrientApiVersion'
+      description: |-
+        Extract structured content from a document. Returns either typed document elements
+        with spatial data or a whole-document markdown representation.
+
+        Four processing modes are available:
+        - **text** — Plain text extraction powered by Document Engine. Only supports `markdown` output.
+        - **structure** — OCR-backed structured extraction with spatial element output.
+        - **understand** — Deeper document analysis with structured extraction and semantic enrichment.
+        - **agentic** — AI-powered analysis for complex documents that need visual reasoning and self-correction.
+
+        You can provide the input document in three ways:
+        - **Multipart form upload** via `multipart/form-data` with a `file` field and optional JSON `instructions`.
+        - **URL-based input** via `application/json` with a `url` field pointing to a remote document.
+        - **Raw binary upload** via `application/pdf` (or other supported content types).
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              file:
+                contentType: application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/rtf, image/png, image/jpeg, image/tiff, image/bmp, image/gif, image/webp
+              instructions:
+                contentType: application/json
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The document to parse.
+                  example: <Binary file data>
+                instructions:
+                  description: |-
+                    JSON-serialized processing instructions. Omit to use all defaults
+                    (`mode: "understand"` with spatial element output).
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                      description: |-
+                        URL of a remote document to parse. Use this instead of the `file` field
+                        to process a document hosted at a public URL.
+                      example: https://storage.example.com/invoice.pdf
+                    mode:
+                      $ref: '#/components/schemas/Mode'
+                    output:
+                      $ref: '#/components/schemas/OutputOptions'
+                    options:
+                      $ref: '#/components/schemas/ProcessingOptions'
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL of a remote document to parse.
+                  example: https://storage.example.com/invoice.pdf
+                mode:
+                  $ref: '#/components/schemas/Mode'
+                output:
+                  $ref: '#/components/schemas/OutputOptions'
+                options:
+                  $ref: '#/components/schemas/ProcessingOptions'
+            example:
+              url: https://storage.example.com/invoice.pdf
+              mode: understand
+              output:
+                format: spatial
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+              description: Raw PDF document for direct upload.
+          image/png:
+            schema:
+              type: string
+              format: binary
+              description: Raw PNG image for direct upload.
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+              description: Raw JPEG image for direct upload.
+          image/tiff:
+            schema:
+              type: string
+              format: binary
+              description: Raw TIFF image for direct upload.
+      responses:
+        '200':
+          description: Extraction completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseResponse'
+              examples:
+                spatialElements:
+                  summary: Spatial elements output (structure mode)
+                  value:
+                    status: 200
+                    requestId: req_e5f6g7h8
+                    output:
+                      elements:
+                        - id: a1b2c3d4-1111-4000-8000-000000000001
+                          type: paragraph
+                          role: Title
+                          text: Quarterly Report
+                          confidence: 0.95
+                          readingOrder: 0
+                          bounds:
+                            x: 200
+                            'y': 139
+                            width: 1111
+                            height: 97
+                          page:
+                            pageIndex: 0
+                            pageNumber: 1
+                            width: 1700
+                            height: 2200
+                        - id: a1b2c3d4-2222-4000-8000-000000000002
+                          type: paragraph
+                          role: Text
+                          text: Revenue grew 15% year-over-year.
+                          confidence: 0.97
+                          readingOrder: 1
+                          bounds:
+                            x: 200
+                            'y': 278
+                            width: 1300
+                            height: 69
+                          page:
+                            pageIndex: 0
+                            pageNumber: 1
+                            width: 1700
+                            height: 2200
+                    metrics:
+                      processingTimeMs: 4200
+                      pagesProcessed: 1
+                    usage:
+                      data_extraction_credits:
+                        cost: 1.5
+                        remainingCredits: 850
+                    configuration:
+                      mode: structure
+                      outputFormat: spatial
+                markdownOutput:
+                  summary: Markdown output (text mode)
+                  value:
+                    status: 200
+                    requestId: req_a1b2c3d4
+                    output:
+                      markdown: |-
+                        # Document Title
+
+                        First paragraph of text...
+
+                        ## Section Two
+
+                        More content here...
+                    metrics:
+                      processingTimeMs: 312
+                      pagesProcessed: 1
+                    usage:
+                      data_extraction_credits:
+                        cost: 1
+                        remainingCredits: 850
+                    configuration:
+                      mode: text
+                      outputFormat: markdown
+        '400':
+          description: The request is malformed. Invalid parameters, unsupported file format, or missing required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseErrorResponse'
+              example:
+                status: 400
+                requestId: req_err_001
+                errorMessage: The request is malformed
+                errorDetails:
+                  source: request
+                  code: invalid_request
+                  failingPaths:
+                    - path: $.mode
+                      details: 'invalid mode: ''vlm''. Expected: text, structure, understand, agentic'
+        '401':
+          description: You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid.
+        '402':
+          description: Insufficient credits for this request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseErrorResponse'
+              example:
+                status: 402
+                requestId: req_err_002
+                errorMessage: Insufficient credits. This request requires 2 credits, 0 remaining.
+        '413':
+          description: The uploaded file exceeds the maximum allowed size for your plan.
+        '429':
+          description: Too many requests. You have exceeded the rate limit for your subscription.
+        '500':
+          description: An internal processing error occurred. Please retry or contact support with the `requestId`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseErrorResponse'
+              example:
+                status: 500
+                requestId: req_err_003
+                errorMessage: Processing failed. Please retry or contact support with the requestId.
+                errorDetails:
+                  source: maestro
+                  code: maestro_error
+        '503':
+          description: The processing backend is temporarily unavailable. Please retry later.
+      tags:
+        - Data Extraction
+components:
+  parameters:
+    NutrientApiVersion:
+      name: x-nutrient-api-version
+      in: header
+      required: false
+      description: |-
+        Optional API version override for this request.
+
+        If omitted, the request uses the latest version that was available when the API key was created.
+
+        See the [API Versioning](#description/api-versioning) section for the list of supported versions.
+      schema:
+        type: string
+        enum:
+          - '2026-05-25'
+      example: '2026-05-25'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+  schemas:
+    Mode:
+      type: string
+      description: |-
+        Processing pipeline.
+        - `text` — Plain text extraction powered by Document Engine. Only supports `markdown` output format.
+        - `structure` — OCR-backed structured extraction with spatial element output.
+        - `understand` — Deeper document analysis with structured extraction and semantic enrichment.
+        - `agentic` — AI-powered analysis for complex documents that need visual reasoning and self-correction.
+      enum:
+        - text
+        - structure
+        - understand
+        - agentic
+      default: understand
+      example: understand
+    OutputOptions:
+      type: object
+      description: |-
+        Output configuration. When provided, `format` is required.
+        Default format depends on the mode: `text` defaults to `markdown`;
+        `structure`, `understand`, and `agentic` default to `spatial`.
+      required:
+        - format
+      properties:
+        format:
+          type: string
+          description: |-
+            The output format.
+            - `spatial` — Flat typed elements with bounding boxes, confidence scores, reading order, and page references.
+              Not available with `text` mode.
+            - `markdown` — Whole-document markdown representation.
+          enum:
+            - spatial
+            - markdown
+          example: spatial
+        includeWords:
+          type: boolean
+          description: |-
+            Include word-level OCR data nested inside paragraph and table cell elements.
+            Only applicable when `format` is `spatial`.
+          default: false
+          example: false
+    ProcessingOptions:
+      type: object
+      description: Additional processing options.
+      properties:
+        language:
+          description: |-
+            OCR language hint. Only supported for `structure`, `understand`, and `agentic` modes.
+            Accepts lowercase language names (`"english"`, `"german"`)
+            or ISO 639-2 language codes (`"eng"`, `"deu"`). Multilingual OCR can be expressed
+            as an array (`["eng", "spa"]`) or a `+`-joined string (`"eng+spa"`).
+          default: eng
+          oneOf:
+            - type: string
+              example: english
+            - type: array
+              items:
+                type: string
+              example:
+                - eng
+                - spa
+    ParseResponse:
+      type: object
+      required:
+        - status
+        - requestId
+        - output
+        - metrics
+        - configuration
+      properties:
+        status:
+          type: integer
+          description: HTTP status code.
+          enum:
+            - 200
+          example: 200
+        requestId:
+          type: string
+          description: Unique request identifier for debugging and support.
+          example: req_e5f6g7h8
+        output:
+          $ref: '#/components/schemas/ParseOutput'
+        metrics:
+          $ref: '#/components/schemas/Metrics'
+        usage:
+          $ref: '#/components/schemas/Usage'
+        configuration:
+          $ref: '#/components/schemas/Configuration'
+    ParseOutput:
+      type: object
+      description: |-
+        Extracted content. Contains either `elements` (for spatial format) or `markdown`
+        (for markdown format), never both.
+      properties:
+        elements:
+          type: array
+          description: |-
+            Flat list of document elements across all pages, ordered by reading order.
+            Present when `output.format` is `spatial`.
+          items:
+            $ref: '#/components/schemas/Element'
+        markdown:
+          type: string
+          description: |-
+            Whole-document markdown content.
+            Present when `output.format` is `markdown`.
+          example: |-
+            # Document Title
+
+            First paragraph of text...
+    Metrics:
+      type: object
+      required:
+        - processingTimeMs
+        - pagesProcessed
+      properties:
+        processingTimeMs:
+          type: number
+          description: Total processing time in milliseconds.
+          example: 4200
+        pagesProcessed:
+          type: integer
+          description: Number of pages processed.
+          example: 1
+    Usage:
+      type: object
+      properties:
+        data_extraction_credits:
+          type: object
+          required:
+            - cost
+            - remainingCredits
+          properties:
+            cost:
+              type: number
+              description: Credits consumed by this request.
+              example: 2
+            remainingCredits:
+              type: number
+              description: Remaining credits in the account.
+              example: 850
+    Configuration:
+      type: object
+      required:
+        - mode
+        - outputFormat
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        outputFormat:
+          type: string
+          description: The output format that was used for this request.
+          enum:
+            - spatial
+            - markdown
+          example: spatial
+    ParseErrorResponse:
+      type: object
+      required:
+        - status
+        - requestId
+        - errorMessage
+      properties:
+        status:
+          type: integer
+          description: HTTP status code.
+          example: 400
+        requestId:
+          type: string
+          description: Unique request identifier for debugging and support.
+          example: req_err_001
+        errorMessage:
+          type: string
+          description: Human-readable error summary.
+          example: The request is malformed
+        errorDetails:
+          type: object
+          description: Structured error details. Present on validation and processing errors.
+          properties:
+            source:
+              type: string
+              description: |-
+                Error origin.
+                - `request` — Validation errors (invalid parameters, unsupported format).
+                - `processing` — Backend processing failures.
+                - `maestro` — Maestro engine failures.
+              example: request
+            code:
+              type: string
+              description: Machine-readable error code stable enough for client branching.
+              example: invalid_request
+            failingPaths:
+              type: array
+              description: List of invalid fields. Present on validation errors.
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                    description: JSON path to the invalid field.
+                    example: $.mode
+                  details:
+                    type: string
+                    description: Human-readable validation error.
+                    example: 'invalid mode: ''vlm''. Expected: text, structure, understand, agentic'
+    Element:
+      oneOf:
+        - $ref: '#/components/schemas/ParagraphElement'
+        - $ref: '#/components/schemas/FormulaElement'
+        - $ref: '#/components/schemas/PictureElement'
+        - $ref: '#/components/schemas/TableElement'
+        - $ref: '#/components/schemas/KeyValueRegionElement'
+        - $ref: '#/components/schemas/HandwritingElement'
+      discriminator:
+        propertyName: type
+        mapping:
+          paragraph: '#/components/schemas/ParagraphElement'
+          formula: '#/components/schemas/FormulaElement'
+          picture: '#/components/schemas/PictureElement'
+          table: '#/components/schemas/TableElement'
+          keyValueRegion: '#/components/schemas/KeyValueRegionElement'
+          handwriting: '#/components/schemas/HandwritingElement'
+    ElementBase:
+      type: object
+      required:
+        - id
+        - type
+        - bounds
+        - confidence
+        - readingOrder
+        - page
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique element identifier.
+          example: a1b2c3d4-1111-4000-8000-000000000001
+        bounds:
+          $ref: '#/components/schemas/Bounds'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Detection confidence score.
+          example: 0.95
+        readingOrder:
+          type: integer
+          minimum: 0
+          description: Reading order index within the page.
+          example: 0
+        page:
+          $ref: '#/components/schemas/PageRef'
+    ParagraphElement:
+      allOf:
+        - $ref: '#/components/schemas/ElementBase'
+        - type: object
+          required:
+            - type
+            - text
+          properties:
+            type:
+              type: string
+              enum:
+                - paragraph
+            role:
+              description: Semantic role of the paragraph. Null when the role is undetermined.
+              oneOf:
+                - type: string
+                  enum:
+                    - Text
+                    - Title
+                    - SectionHeader
+                    - Header
+                    - Footer
+                    - Caption
+                    - Footnote
+                    - ListItem
+                    - PageNumber
+                    - Code
+                    - CheckboxSelected
+                    - CheckboxUnselected
+                - type: 'null'
+              example: Text
+            text:
+              type: string
+              description: Extracted text content.
+              example: Revenue grew 15% year-over-year.
+            words:
+              description: Word-level OCR data. Present when `includeWords` is `true`.
+              oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/Word'
+                - type: 'null'
+    FormulaElement:
+      allOf:
+        - $ref: '#/components/schemas/ElementBase'
+        - type: object
+          required:
+            - type
+            - latex
+          properties:
+            type:
+              type: string
+              enum:
+                - formula
+            latex:
+              type: string
+              description: LaTeX representation of the formula.
+              example: r = r_0 e^{kt}
+    PictureElement:
+      allOf:
+        - $ref: '#/components/schemas/ElementBase'
+        - type: object
+          required:
+            - type
+            - classification
+            - classificationConfidence
+            - altDescription
+          properties:
+            type:
+              type: string
+              enum:
+                - picture
+            classification:
+              type: string
+              description: Image classification category (chart, photo, diagram, etc.).
+              example: chart
+            classificationConfidence:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Confidence score for the classification.
+              example: 0.91
+            altDescription:
+              type: string
+              description: AI-generated alternative text description.
+              example: Bar chart showing quarterly revenue growth across regions
+            captionIds:
+              description: IDs of associated caption paragraph elements.
+              oneOf:
+                - type: array
+                  items:
+                    type: string
+                    format: uuid
+                - type: 'null'
+            footnoteIds:
+              description: IDs of associated footnote paragraph elements.
+              oneOf:
+                - type: array
+                  items:
+                    type: string
+                    format: uuid
+                - type: 'null'
+    TableElement:
+      allOf:
+        - $ref: '#/components/schemas/ElementBase'
+        - type: object
+          required:
+            - type
+            - rowCount
+            - columnCount
+            - cells
+          properties:
+            type:
+              type: string
+              enum:
+                - table
+            rowCount:
+              type: integer
+              minimum: 0
+              description: Number of rows in the table.
+              example: 3
+            columnCount:
+              type: integer
+              minimum: 0
+              description: Number of columns in the table.
+              example: 3
+            cells:
+              type: array
+              description: Cell-level data.
+              items:
+                $ref: '#/components/schemas/TableCell'
+            captionIds:
+              description: IDs of associated caption paragraph elements.
+              oneOf:
+                - type: array
+                  items:
+                    type: string
+                    format: uuid
+                - type: 'null'
+            footnoteIds:
+              description: IDs of associated footnote paragraph elements.
+              oneOf:
+                - type: array
+                  items:
+                    type: string
+                    format: uuid
+                - type: 'null'
+    KeyValueRegionElement:
+      allOf:
+        - $ref: '#/components/schemas/ElementBase'
+        - type: object
+          required:
+            - type
+            - pairs
+          properties:
+            type:
+              type: string
+              enum:
+                - keyValueRegion
+            pairs:
+              type: array
+              description: Detected key-value pairs.
+              items:
+                $ref: '#/components/schemas/KeyValuePair'
+    HandwritingElement:
+      allOf:
+        - $ref: '#/components/schemas/ElementBase'
+        - type: object
+          required:
+            - type
+            - text
+          properties:
+            type:
+              type: string
+              enum:
+                - handwriting
+            text:
+              type: string
+              description: Extracted handwritten text content.
+              example: John Doe
+            words:
+              description: Word-level OCR data. Present when `includeWords` is `true`.
+              oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/Word'
+                - type: 'null'
+    Bounds:
+      type: object
+      required:
+        - x
+        - 'y'
+        - width
+        - height
+      description: |-
+        Bounding box of an element on the page. `(x, y)` is the top-left corner of the box.
+        Origin is the top-left of the page, with x increasing right and y increasing down.
+
+        Coordinates are always expressed in render-space pixels.
+        `page.width` and `page.height` describe the same pixel canvas as every element,
+        word, and table cell bound on that page.
+      properties:
+        x:
+          type: number
+          description: X coordinate of the top-left corner (distance from page left edge).
+          example: 100
+        'y':
+          type: number
+          description: Y coordinate of the top-left corner (distance from page top edge).
+          example: 50
+        width:
+          type: number
+          description: Width of the bounding box.
+          example: 400
+        height:
+          type: number
+          description: Height of the bounding box.
+          example: 35
+    Word:
+      type: object
+      required:
+        - text
+        - bounds
+        - confidence
+      description: Word-level OCR result.
+      properties:
+        text:
+          type: string
+          description: The word text.
+          example: Revenue
+        bounds:
+          $ref: '#/components/schemas/Bounds'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: OCR confidence score.
+          example: 0.95
+    PageRef:
+      type: object
+      required:
+        - pageIndex
+        - pageNumber
+        - width
+        - height
+      description: |-
+        Source page reference. Provides the page index and the full page dimensions,
+        which define the coordinate space that all element bounds on this page are relative to.
+      properties:
+        pageIndex:
+          type: integer
+          minimum: 0
+          description: 0-based page index.
+          example: 0
+        pageNumber:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          example: 1
+        width:
+          type: number
+          description: Page width in render-space pixels.
+          example: 1700
+        height:
+          type: number
+          description: Page height in render-space pixels.
+          example: 2200
+    TableCell:
+      type: object
+      required:
+        - id
+        - bounds
+        - confidence
+        - row
+        - column
+        - rowSpan
+        - colSpan
+        - text
+      properties:
+        id:
+          type: string
+          description: Unique cell identifier.
+          example: c-001
+        bounds:
+          $ref: '#/components/schemas/Bounds'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Detection confidence score.
+          example: 0.94
+        row:
+          type: integer
+          minimum: 0
+          description: 0-indexed row.
+          example: 0
+        column:
+          type: integer
+          minimum: 0
+          description: 0-indexed column.
+          example: 0
+        rowSpan:
+          type: integer
+          minimum: 1
+          description: Number of rows this cell spans.
+          default: 1
+          example: 1
+        colSpan:
+          type: integer
+          minimum: 1
+          description: Number of columns this cell spans.
+          default: 1
+          example: 1
+        text:
+          type: string
+          description: Extracted text content.
+          example: Region
+        words:
+          description: Word-level OCR data. Present when `includeWords` is `true`.
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/Word'
+            - type: 'null'
+    KeyValuePair:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the pair.
+          example: kvp-001
+        key:
+          description: The key/question entity. Null when only a value was detected.
+          oneOf:
+            - $ref: '#/components/schemas/KeyValueEntity'
+            - type: 'null'
+        value:
+          description: The value/answer entity. Null when only a key was detected.
+          oneOf:
+            - $ref: '#/components/schemas/KeyValueEntity'
+            - type: 'null'
+        relationshipConfidence:
+          description: Confidence for the key-value relationship.
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: 'null'
+          example: 0.93
+    KeyValueEntity:
+      type: object
+      required:
+        - id
+        - bounds
+        - confidence
+        - entityType
+        - value
+      properties:
+        id:
+          type: string
+          description: Unique entity identifier.
+          example: kve-001
+        bounds:
+          $ref: '#/components/schemas/Bounds'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Detection confidence score.
+          example: 0.92
+        entityType:
+          type: string
+          description: Entity type.
+          enum:
+            - QUESTION
+            - ANSWER
+            - ''
+          example: QUESTION
+        value:
+          description: Extracted value.
+          example: Invoice Number
+x-tagGroups:
+  - name: Endpoints
+    tags:
+      - Data Extraction
+  - name: Reference
+    tags:
+      - File Type Support
+      - OCR Language Support
