@@ -7,7 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- First-class client support for the Data Extraction API (`POST /extraction/parse`).
+  - `NutrientClient.parse(input, options?)` — full request/response surface with
+    typed support for all four modes (`text`, `structure`, `understand`, `agentic`)
+    and both output formats (`spatial`, `markdown`).
+  - `NutrientClient.parseToMarkdown(input, mode?)` — convenience wrapper returning
+    the whole-document Markdown string directly.
+  - `NutrientClient.parseElements(input, mode?, includeWords?)` — convenience
+    wrapper returning the spatial elements array directly.
+  - Public types: `ParseMode`, `ParseOutputFormat`, `ParseOutputOptions`,
+    `ParseInstructions`, `ParseOptions`, `ParseResponse`, `ParseResponseSpatial`,
+    `ParseResponseMarkdown`, `ParseElement` (and per-element types like
+    `ParagraphElement`, `TableElement`, `KeyValueRegionElement`), plus error and
+    metadata shapes (`ParseErrorResponse`, `ParseMetrics`, `ParseUsage`,
+    `ParseConfiguration`).
+  - Live smoke script at `scripts/smoke_parse.ts` for verifying against the
+    production endpoint.
+  - Billing note: `/extraction/parse` debits the account's **extraction
+    credits** bucket, which is separate from the **processor API credits** used
+    by the rest of `NutrientClient`. The response surfaces this explicitly in
+    `usage.data_extraction_credits`.
 
 ## [2.0.0] - 2026-01-27
 

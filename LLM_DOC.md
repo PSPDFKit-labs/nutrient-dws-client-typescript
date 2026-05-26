@@ -461,6 +461,53 @@ if (kvps && kvps.length > 0) {
 }
 ```
 
+#### parse(input, options?)
+Extracts structured content from a document via the Data Extraction API (`POST /extraction/parse`).
+
+Billed against **extraction credits** (a separate bucket from processor API credits used by every other method). Mode costs per page:
+- `text` — 1 extraction credit (Markdown only)
+- `structure` — 1.5 extraction credits (spatial elements)
+- `understand` — 9 extraction credits (default)
+- `agentic` — 18 extraction credits
+
+```typescript
+// Full call: spatial elements with bounding boxes, confidence, reading order
+const result = await client.parse('invoice.pdf', {
+  mode: 'understand',
+  output: { format: 'spatial', includeWords: true },
+  language: ['eng', 'spa'],
+});
+
+if (result.output.elements !== undefined) {
+  for (const el of result.output.elements) {
+    if (el.type === 'paragraph') console.log(el.text);
+  }
+}
+
+// Extraction-credit accounting (separate from processor credits):
+console.log(result.usage?.data_extraction_credits?.cost);
+
+// URL input (server fetches the URL):
+const remote = await client.parse('https://example.com/doc.pdf', { mode: 'text' });
+```
+
+#### parseToMarkdown(input, mode?)
+Convenience wrapper that returns just the whole-document Markdown string. Defaults to `mode='text'` (cheapest, 1 extraction credit/page).
+
+```typescript
+const markdown = await client.parseToMarkdown('document.pdf');
+const richer = await client.parseToMarkdown('scan.pdf', 'understand');
+```
+
+#### parseElements(input, mode?, includeWords?)
+Convenience wrapper that returns just the array of spatial elements. Defaults to `mode='structure'`. Cannot use `mode='text'`.
+
+```typescript
+const elements = await client.parseElements('document.pdf');
+const tables = elements.filter(e => e.type === 'table');
+const withWords = await client.parseElements('scan.pdf', 'understand', true);
+```
+
 #### flatten(file, annotationIds?)
 Flattens annotations in a PDF document.
 

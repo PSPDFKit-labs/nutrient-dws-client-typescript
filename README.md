@@ -133,6 +133,80 @@ const mergedPdf = await client.merge(['doc1.pdf', 'doc2.pdf', 'doc3.pdf']);
 
 For a complete list of available methods with examples, see the [Methods Documentation](docs/METHODS.md).
 
+## Data Extraction (`/extraction/parse`)
+
+In addition to the document-processing endpoints, the client supports the
+[Data Extraction API](https://www.nutrient.io/api/reference/data-extraction/public/)
+for extracting structured content from PDFs, images, and Office files.
+
+**Billing**: `/extraction/parse` is billed against the account's **extraction
+credits** bucket, which is **separate** from the **processor API credits**
+consumed by `convert`, `ocr`, `sign`, `merge`, and the other endpoints. The
+two buckets never debit each other.
+
+Four processing modes, each with its own extraction-credit cost per page:
+
+| Mode         | Cost (per page)        | Use case                                                                       |
+| ------------ | ---------------------- | ------------------------------------------------------------------------------ |
+| `text`       | 1 extraction credit    | Fast Markdown extraction from born-digital documents. No OCR.                  |
+| `structure`  | 1.5 extraction credits | OCR-backed structured extraction with spatial elements and bounding boxes.     |
+| `understand` | 9 extraction credits   | AI-augmented parsing for complex layouts, OCR correction, formulas. (Default.) |
+| `agentic`    | 18 extraction credits  | VLM-augmented extraction for the deepest visual understanding.                 |
+
+Two output formats: `spatial` (typed elements + bounds + confidence + reading
+order, default for non-text modes) or `markdown` (whole-document Markdown, ideal
+for RAG, default for `text`).
+
+```typescript
+import { NutrientClient } from '@nutrient-sdk/dws-client-typescript';
+
+const client = new NutrientClient({ apiKey: process.env.NUTRIENT_API_KEY! });
+
+// Full /extraction/parse call with explicit mode + output.
+const result = await client.parse('invoice.pdf', {
+  mode: 'understand',
+  output: { format: 'spatial', includeWords: true },
+  language: ['eng', 'spa'],
+});
+
+// Narrow on the present field for type-safe access:
+if (result.output.elements !== undefined) {
+  for (const el of result.output.elements) {
+    if (el.type === 'paragraph') console.log(el.text);
+    if (el.type === 'table') console.log(`${el.rowCount}x${el.columnCount} table`);
+  }
+}
+
+// Extraction-credit accounting is returned per request:
+console.log(
+  'Extraction credits used:',
+  result.usage?.data_extraction_credits?.cost,
+);
+console.log(
+  'Extraction credits remaining:',
+  result.usage?.data_extraction_credits?.remainingCredits,
+);
+
+// Convenience: get just the Markdown (cheapest mode by default).
+const markdown = await client.parseToMarkdown('document.pdf');
+
+// Convenience: get just the spatial elements.
+const elements = await client.parseElements('scan.pdf', 'understand');
+
+// URL input works the same way — the server fetches the URL.
+const remote = await client.parse('https://example.com/document.pdf', {
+  mode: 'text',
+});
+```
+
+The full set of public types — `ParseMode`, `ParseElement`, `ParagraphElement`,
+`TableElement`, `KeyValueRegionElement`, `ParseResponse`, etc. — is exported
+from the package root for downstream typing.
+
+A live smoke script that calls the real endpoint with a sample PDF and prints a
+parsed summary is available at `examples/src/parse_smoke.ts`. See the file
+header for the run recipe.
+
 
 ## Workflow System
 

@@ -455,6 +455,71 @@ if (kvps && kvps.length > 0) {
 }
 ```
 
+##### parse(input, options?)
+Extracts structured content via the Data Extraction API (`POST /extraction/parse`).
+
+This is the cleanest entry point for parsing PDFs, images, and Office files into either:
+- Spatial elements (typed components — paragraphs, tables, formulas, pictures, key-value regions, handwriting — with bounding boxes, confidence scores, and reading order), or
+- Whole-document Markdown (ideal for RAG and search indexing).
+
+**Billing**: `/extraction/parse` is billed against the account's **extraction credits** bucket, separate from the **processor API credits** used by every other method in this client. Per-page cost depends on the mode:
+
+| Mode         | Extraction credits per page |
+| ------------ | --------------------------- |
+| `text`       | 1                           |
+| `structure`  | 1.5                         |
+| `understand` | 9 (default)                 |
+| `agentic`    | 18                          |
+
+```typescript
+// Cheapest mode: born-digital PDF → Markdown for a RAG pipeline.
+const md = await client.parse('invoice.pdf', { mode: 'text' });
+if (md.output.markdown !== undefined) {
+  console.log(md.output.markdown);
+}
+
+// OCR-backed spatial extraction.
+const spatial = await client.parse('scan.pdf', {
+  mode: 'structure',
+  output: { format: 'spatial', includeWords: true },
+  language: ['eng', 'spa'],
+});
+if (spatial.output.elements !== undefined) {
+  for (const el of spatial.output.elements) {
+    if (el.type === 'paragraph') console.log(el.text);
+  }
+}
+
+// URL input (the server fetches the URL — no client-side download needed).
+const remote = await client.parse('https://example.com/document.pdf');
+
+// Extraction-credit accounting:
+console.log(remote.usage?.data_extraction_credits?.cost);
+console.log(remote.usage?.data_extraction_credits?.remainingCredits);
+```
+
+##### parseToMarkdown(input, mode?)
+Convenience wrapper that calls `parse()` with `output.format = 'markdown'` and returns the Markdown string directly. Defaults to `mode='text'` (1 extraction credit/page).
+
+```typescript
+const markdown = await client.parseToMarkdown('document.pdf');
+const richer = await client.parseToMarkdown('scan.pdf', 'understand');
+```
+
+##### parseElements(input, mode?, includeWords?)
+Convenience wrapper that calls `parse()` with `output.format = 'spatial'` and returns the elements array directly. Defaults to `mode='structure'` (1.5 extraction credits/page). Pass `mode='text'` is rejected at compile time since `text` mode does not produce spatial output.
+
+```typescript
+const elements = await client.parseElements('document.pdf');
+
+// Get word-level OCR data nested inside paragraphs and table cells.
+const withWords = await client.parseElements('scan.pdf', 'understand', true);
+
+// Filter by element type.
+const tables = elements.filter(e => e.type === 'table');
+const paragraphs = elements.filter(e => e.type === 'paragraph');
+```
+
 ##### flatten(file, annotationIds?)
 Flattens annotations in a PDF document.
 
