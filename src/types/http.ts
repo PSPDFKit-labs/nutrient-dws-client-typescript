@@ -1,5 +1,6 @@
 import type { components, operations } from '../generated/api-types';
 import type { NormalizedFileData } from '../inputs';
+import type { ParseInstructions, ParseResponse } from './parse';
 import type { ValueOf } from '@typescript-eslint/eslint-plugin/dist/util';
 
 export type RequestTypeMap = {
@@ -26,6 +27,15 @@ export type RequestTypeMap = {
       file?: NormalizedFileData;
     };
     '/tokens': components['schemas']['CreateAuthTokenParameters'];
+    /**
+     * `/extraction/parse` request body. Use exactly one of:
+     * - `file` + optional `instructions` for multipart upload (local files, buffers, streams).
+     * - `instructions.url` only for URL-based input (sent as `application/json`).
+     */
+    '/extraction/parse': {
+      instructions: ParseInstructions;
+      file?: NormalizedFileData;
+    };
   };
   DELETE: {
     '/tokens': { id: string };
@@ -42,6 +52,7 @@ export type ResponseTypeMap = {
     '/sign': string;
     '/ai/redact': string;
     '/tokens': components['schemas']['CreateAuthTokenResponse'];
+    '/extraction/parse': ParseResponse;
   };
   DELETE: {
     '/tokens': undefined;
