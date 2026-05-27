@@ -456,68 +456,106 @@ if (kvps && kvps.length > 0) {
 ```
 
 ##### parse(input, options?)
-Extracts structured content via the Data Extraction API (`POST /extraction/parse`).
+Calls the Data Extraction API (`POST /extraction/parse`) to extract structured
+content from a document. Designed for **RAG ingestion**, **search indexing**,
+**content migration**, and **form/invoice extraction** workflows where the goal
+is to feed document content into a downstream pipeline rather than render or
+transform the document itself.
 
-This is the cleanest entry point for parsing PDFs, images, and Office files into either:
-- Spatial elements (typed components — paragraphs, tables, formulas, pictures, key-value regions, handwriting — with bounding boxes, confidence scores, and reading order), or
-- Whole-document Markdown (ideal for RAG and search indexing).
+Accepts PDFs, Office documents (Word, Excel, PowerPoint), and images as input.
+Unlike `sign()`, it is not restricted to PDFs.
 
-**Billing**: `/extraction/parse` is billed against the account's **extraction credits** bucket, separate from the **processor API credits** used by every other method in this client. Per-page cost depends on the mode:
+Billed against **extraction credits** — a separate billing bucket from the
+processor API credits consumed by every other method on this client. See the
+[README's Data Extraction section](../README.md#data-extraction-extractionparse)
+for the full positioning, the per-mode comparison table, and worked recipes.
 
-| Mode         | Extraction credits per page |
-| ------------ | --------------------------- |
-| `text`       | 1                           |
-| `structure`  | 1.5                         |
-| `understand` | 9 (default)                 |
-| `agentic`    | 18                          |
+**Parameters**:
+- `input: FileInputWithUrl` — The document to parse. Accepts local files (paths,
+  Buffers, streams), a URL string, or a `{ type: 'url', url: '...' }` object.
+  The endpoint accepts PDFs, Office documents, and images.
+- `options?: ParseOptions` — Optional configuration:
+  - `mode: ParseMode` — `'text'` (1 cr/page, born-digital, Markdown only),
+    `'structure'` (1.5 cr/page, OCR + spatial layout),
+    `'understand'` (9 cr/page, AI-augmented, default),
+    or `'agentic'` (18 cr/page, VLM-augmented).
+  - `output.format: ParseOutputFormat` — `'spatial'` (typed elements with bounds
+    and confidence) or `'markdown'` (whole-document Markdown string).
+  - `output.includeWords` — include word-level OCR data inside elements.
+  - `language` — OCR language hint (`'eng'`, `'deu'`, `['eng', 'spa']`, etc.).
+  - `apiVersion` — optional `x-nutrient-api-version` header override.
+
+**Returns**: `ParseResponse` — full response envelope with `output`, `metrics`,
+`configuration`, and `usage.data_extraction_credits` (cost + remaining balance).
 
 ```typescript
-// Cheapest mode: born-digital PDF → Markdown for a RAG pipeline.
-const md = await client.parse('invoice.pdf', { mode: 'text' });
-if (md.output.markdown !== undefined) {
-  console.log(md.output.markdown);
+// RAG ingestion — born-digital PDF → Markdown (1 extraction credit/page).
+const result = await client.parse('whitepaper.pdf', { mode: 'text' });
+if (result.output.markdown !== undefined) {
+  console.log(result.output.markdown);
 }
 
-// OCR-backed spatial extraction.
-const spatial = await client.parse('scan.pdf', {
+// Form extraction — typed spatial elements with bounds and confidence.
+const invoice = await client.parse('invoice.pdf', { mode: 'understand' });
+if (invoice.output.elements !== undefined) {
+  for (const el of invoice.output.elements) {
+    if (el.type === 'keyValueRegion') {
+      for (const pair of el.pairs) {
+        console.log(pair.key?.value, '→', pair.value?.value);
+      }
+    }
+  }
+}
+
+// OCR-backed extraction with word-level data and multilingual hint.
+const scan = await client.parse('scan.pdf', {
   mode: 'structure',
   output: { format: 'spatial', includeWords: true },
   language: ['eng', 'spa'],
 });
-if (spatial.output.elements !== undefined) {
-  for (const el of spatial.output.elements) {
-    if (el.type === 'paragraph') console.log(el.text);
-  }
-}
 
-// URL input (the server fetches the URL — no client-side download needed).
+// URL input — the server fetches the document, no client-side download.
 const remote = await client.parse('https://example.com/document.pdf');
 
-// Extraction-credit accounting:
-console.log(remote.usage?.data_extraction_credits?.cost);
-console.log(remote.usage?.data_extraction_credits?.remainingCredits);
+// Billing — extraction credits, not processor credits.
+const usage = remote.usage?.data_extraction_credits;
+console.log(`Cost: ${usage?.cost} extraction credits`);
+console.log(`Remaining: ${usage?.remainingCredits} extraction credits`);
 ```
 
 ##### parseToMarkdown(input, mode?)
-Convenience wrapper that calls `parse()` with `output.format = 'markdown'` and returns the Markdown string directly. Defaults to `mode='text'` (1 extraction credit/page).
+Convenience wrapper that calls `parse()` with `output.format = 'markdown'` and
+returns the Markdown string directly. Defaults to `mode='text'` (1 extraction
+credit/page) — the cheapest path for born-digital PDFs. Switch to
+`mode='structure'` for scanned documents or images so OCR runs.
 
 ```typescript
+// Born-digital PDF → Markdown (cheapest).
 const markdown = await client.parseToMarkdown('document.pdf');
-const richer = await client.parseToMarkdown('scan.pdf', 'understand');
+
+// Scanned document or image → OCR-backed Markdown.
+const scanned = await client.parseToMarkdown('scan.pdf', 'structure');
+
+// AI-augmented Markdown for complex layouts.
+const rich = await client.parseToMarkdown('report.pdf', 'understand');
 ```
 
 ##### parseElements(input, mode?, includeWords?)
-Convenience wrapper that calls `parse()` with `output.format = 'spatial'` and returns the elements array directly. Defaults to `mode='structure'` (1.5 extraction credits/page). Passing `mode='text'` is rejected at compile time since `text` mode does not produce spatial output.
+Convenience wrapper that calls `parse()` with `output.format = 'spatial'` and
+returns the spatial elements array directly. Defaults to `mode='structure'`
+(1.5 extraction credits/page). Passing `mode='text'` is rejected at compile
+time — `text` mode only produces Markdown, not spatial elements.
 
 ```typescript
+// OCR-backed spatial elements.
 const elements = await client.parseElements('document.pdf');
 
-// Get word-level OCR data nested inside paragraphs and table cells.
-const withWords = await client.parseElements('scan.pdf', 'understand', true);
+// AI-augmented extraction with word-level OCR data.
+const withWords = await client.parseElements('invoice.pdf', 'understand', true);
 
 // Filter by element type.
 const tables = elements.filter(e => e.type === 'table');
-const paragraphs = elements.filter(e => e.type === 'paragraph');
+const kvRegions = elements.filter(e => e.type === 'keyValueRegion');
 ```
 
 ##### flatten(file, annotationIds?)
