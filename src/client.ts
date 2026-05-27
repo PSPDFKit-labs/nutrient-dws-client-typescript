@@ -1814,55 +1814,79 @@ export class NutrientClient {
    * Extracts structured content from a document via the Nutrient Data Extraction API
    * (`POST /extraction/parse`).
    *
-   * Four processing modes are available, each billed against the account's
-   * **extraction credits** bucket (a separate billing bucket from the
-   * **processor API credits** used by the rest of `NutrientClient`):
+   * Designed for **content-extraction workflows** where the goal is to feed document
+   * content into a downstream pipeline rather than render or transform the document:
    *
-   * - `text` — Plain text extraction. Markdown output only. 1 extraction credit/page.
-   * - `structure` — OCR-backed structured extraction with spatial elements. 1.5 extraction credits/page.
-   * - `understand` — Deeper document analysis with semantic enrichment. 9 extraction credits/page. (Default)
-   * - `agentic` — VLM-augmented extraction for complex documents. 18 extraction credits/page.
+   * - **RAG / search indexing / content migration** — use `output.format: 'markdown'`
+   *   to get a whole-document Markdown string ready for chunking, embedding, and
+   *   indexing in a vector store or search engine.
+   * - **Form and invoice extraction** — use `output.format: 'spatial'` (default) to
+   *   get a typed element list (paragraphs, tables, keyValueRegions, etc.) with
+   *   bounding boxes and confidence scores per element.
+   * - **Layout-aware document understanding** — combine `mode: 'understand'` or
+   *   `mode: 'agentic'` with spatial output for deep layout reconstruction and
+   *   semantic classification, including agentic workflows.
    *
-   * Two output formats:
-   * - `spatial` (default for `structure`/`understand`/`agentic`) — Typed elements
-   *   with bounds, confidence, reading order, and page refs.
-   * - `markdown` (default for `text`) — Whole-document Markdown for RAG and search.
+   * See the README's Data Extraction section for per-mode positioning, a
+   * "when to use which mode" table, and worked recipes (RAG ingestion,
+   * form/invoice extraction).
    *
-   * @param input - The document to parse. Accepts local files, buffers, streams, or a URL.
-   * @param options - Optional parse configuration (mode, output format, language, API version).
-   * @returns Promise resolving to the `/extraction/parse` response. Narrow on
-   *          `output.markdown` / `output.elements` for type-safe field access, or
-   *          read `configuration.outputFormat` for the server-resolved value.
+   * **Billing**: billed against **extraction credits**, a separate bucket from the
+   * **processor API credits** used by every other method on this client. Per-page
+   * costs: `text` 1 cr, `structure` 1.5 cr, `understand` 9 cr, `agentic` 18 cr.
+   *
+   * @param input - The document to parse. Accepts local files (paths, Buffers,
+   *   streams), or a URL string / `{ type: 'url', url: '...' }` object. The endpoint
+   *   accepts a range of document formats — PDFs, Office documents (Word, Excel,
+   *   PowerPoint), and images. Unlike `sign()`, parsing is not restricted to PDFs.
+   * @param options - Optional parse configuration:
+   *   - `mode` — processing pipeline (`'text'` | `'structure'` | `'understand'` | `'agentic'`).
+   *   - `output.format` — `'spatial'` for typed elements or `'markdown'` for Markdown.
+   *   - `output.includeWords` — include word-level OCR data inside elements.
+   *   - `language` — OCR language hint (string or array of ISO 639-2 codes).
+   *   - `apiVersion` — optional API-version header override.
+   * @returns Promise resolving to the full `/extraction/parse` response envelope.
+   *   Narrow on `output.markdown` / `output.elements` for type-safe field access,
+   *   or read `configuration.outputFormat` for the server-resolved value.
+   *   Extraction-credit accounting is at `usage.data_extraction_credits`.
    *
    * @example
    * ```typescript
-   * // Whole-document Markdown for a RAG pipeline (cheapest mode).
-   * const md = await client.parse('invoice.pdf', { mode: 'text' });
+   * // RAG ingestion — born-digital PDF → Markdown, cheapest path (1 cr/page).
+   * const md = await client.parse('whitepaper.pdf', { mode: 'text' });
    * if (md.output.markdown !== undefined) {
    *   console.log(md.output.markdown);
    * }
    *
-   * // Spatial elements for a born-OCR scan.
-   * const spatial = await client.parse('scan.pdf', {
+   * // Form/invoice extraction — spatial elements with bounds and confidence.
+   * const spatial = await client.parse('invoice.pdf', { mode: 'understand' });
+   * if (spatial.output.elements !== undefined) {
+   *   for (const el of spatial.output.elements) {
+   *     if (el.type === 'keyValueRegion') {
+   *       for (const pair of el.pairs) {
+   *         console.log(pair.key?.value, '→', pair.value?.value);
+   *       }
+   *     }
+   *   }
+   * }
+   *
+   * // OCR-backed extraction with word-level data and multilingual hint.
+   * const scan = await client.parse('scan.pdf', {
    *   mode: 'structure',
    *   output: { format: 'spatial', includeWords: true },
    *   language: ['eng', 'spa'],
    * });
-   * if (spatial.output.elements !== undefined) {
-   *   for (const el of spatial.output.elements) {
-   *     if (el.type === 'paragraph') console.log(el.text);
-   *   }
-   * }
    *
-   * // Parse a remote document (URL input).
+   * // URL input — the server fetches the document, no client-side download.
    * const remote = await client.parse('https://example.com/doc.pdf');
    *
-   * // Cost reporting — extraction credits, not processor API credits.
-   * console.log('Extraction credits used:', remote.usage?.data_extraction_credits?.cost);
+   * // Extraction-credit accounting (separate from processor API credits).
+   * console.log('Credits used:', remote.usage?.data_extraction_credits?.cost);
+   * console.log('Credits left:', remote.usage?.data_extraction_credits?.remainingCredits);
    *
-   * // Or skip the discriminant entirely with the convenience wrappers:
-   * const justMarkdown = await client.parseToMarkdown('invoice.pdf');
-   * const justElements = await client.parseElements('scan.pdf', 'understand');
+   * // Convenience wrappers skip output-format discrimination entirely:
+   * const markdown = await client.parseToMarkdown('whitepaper.pdf');
+   * const elements = await client.parseElements('invoice.pdf', 'understand');
    * ```
    */
   async parse(input: FileInputWithUrl, options?: ParseOptions): Promise<ParseResponse> {
