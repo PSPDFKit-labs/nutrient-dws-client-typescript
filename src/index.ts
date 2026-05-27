@@ -38,6 +38,7 @@ export type {
   WorkflowDryRunResult,
 
   // Data Extraction (`/extraction/parse`) types
+  ExtractionCredits,
   ParseMode,
   ParseOutputFormat,
   ParseOutputOptions,

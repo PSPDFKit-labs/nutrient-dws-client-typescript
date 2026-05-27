@@ -1,3 +1,7 @@
+import type { ExtractionCredits } from './extraction_credits';
+
+export type { ExtractionCredits };
+
 /**
  * Type definitions for the Nutrient Data Extraction API (`POST /extraction/parse`).
  *
@@ -278,14 +282,11 @@ export interface ParseMetrics {
  *
  * **Extraction credits** are a separate billing bucket from processor API credits;
  * an extraction call never debits processor credits and vice-versa.
+ *
+ * See {@link ExtractionCredits} for the shape of the billing object.
  */
 export interface ParseUsage {
-  data_extraction_credits?: {
-    /** Extraction credits consumed by this request. */
-    cost: number;
-    /** Remaining extraction credits in the account. */
-    remainingCredits: number;
-  };
+  data_extraction_credits?: ExtractionCredits;
 }
 
 /**
