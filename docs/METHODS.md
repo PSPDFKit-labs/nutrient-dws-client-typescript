@@ -507,7 +507,7 @@ const richer = await client.parseToMarkdown('scan.pdf', 'understand');
 ```
 
 ##### parseElements(input, mode?, includeWords?)
-Convenience wrapper that calls `parse()` with `output.format = 'spatial'` and returns the elements array directly. Defaults to `mode='structure'` (1.5 extraction credits/page). Pass `mode='text'` is rejected at compile time since `text` mode does not produce spatial output.
+Convenience wrapper that calls `parse()` with `output.format = 'spatial'` and returns the elements array directly. Defaults to `mode='structure'` (1.5 extraction credits/page). Passing `mode='text'` is rejected at compile time since `text` mode does not produce spatial output.
 
 ```typescript
 const elements = await client.parseElements('document.pdf');

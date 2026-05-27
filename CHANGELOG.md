@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `ParagraphElement`, `TableElement`, `KeyValueRegionElement`), plus error and
     metadata shapes (`ParseErrorResponse`, `ParseMetrics`, `ParseUsage`,
     `ParseConfiguration`).
-  - Live smoke script at `scripts/smoke_parse.ts` for verifying against the
+  - Live smoke script at `examples/src/parse_smoke.ts` for verifying against the
     production endpoint.
   - Billing note: `/extraction/parse` debits the account's **extraction
     credits** bucket, which is separate from the **processor API credits** used
