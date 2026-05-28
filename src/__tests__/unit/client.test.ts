@@ -232,6 +232,38 @@ describe('NutrientClient', () => {
       ).toThrow('Base URL must be a string');
     });
 
+    it('should accept a string extractApiKey', () => {
+      const client = new NutrientClient({
+        apiKey: 'processor-key',
+        extractApiKey: 'extract-key',
+      });
+      expect(client).toBeDefined();
+    });
+
+    it('should accept an async extractApiKey getter', () => {
+      const client = new NutrientClient({
+        apiKey: 'processor-key',
+        extractApiKey: (): Promise<string> => Promise.resolve('extract-key'),
+      });
+      expect(client).toBeDefined();
+    });
+
+    it('should throw ValidationError for invalid extractApiKey type', () => {
+      expect(
+        () =>
+          new NutrientClient({
+            apiKey: 'processor-key',
+            extractApiKey: 123 as unknown as string,
+          }),
+      ).toThrow(ValidationError);
+      expect(
+        () =>
+          new NutrientClient({
+            apiKey: 'processor-key',
+            extractApiKey: 123 as unknown as string,
+          }),
+      ).toThrow('Extract API key must be a string or a function that returns a Promise<string>');
+    });
   });
 
   describe('workflow()', () => {

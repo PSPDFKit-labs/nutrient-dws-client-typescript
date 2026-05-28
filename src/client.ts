@@ -71,6 +71,13 @@ function normalizePageParams(
  *     return token;
  *   }
  * });
+ *
+ * // Data Extraction (`parse()`) needs its own key — it's a separate product
+ * // with its own credit pool. Pass both:
+ * const client = new NutrientClient({
+ *   apiKey: 'your-processor-key',
+ *   extractApiKey: 'your-extract-key',
+ * });
  * ```
  */
 export class NutrientClient {
@@ -114,6 +121,16 @@ export class NutrientClient {
 
     if (options.baseUrl && typeof options.baseUrl !== 'string') {
       throw new ValidationError('Base URL must be a string');
+    }
+
+    if (
+      options.extractApiKey !== undefined &&
+      typeof options.extractApiKey !== 'string' &&
+      typeof options.extractApiKey !== 'function'
+    ) {
+      throw new ValidationError(
+        'Extract API key must be a string or a function that returns a Promise<string>',
+      );
     }
   }
 
@@ -1835,6 +1852,11 @@ export class NutrientClient {
    * **processor API credits** used by every other method on this client. Per-page
    * costs: `text` 1 cr, `structure` 1.5 cr, `understand` 9 cr, `agentic` 18 cr.
    *
+   * **Authentication**: Data Extraction is a separate product with its own API
+   * key. Pass it via `new NutrientClient({ apiKey, extractApiKey })`. If
+   * `extractApiKey` is omitted, this method falls back to `apiKey`, which only
+   * succeeds when the key is a global DWS key authorised for both products.
+   *
    * @param input - The document to parse. Accepts local files (paths, Buffers,
    *   streams), or a URL string / `{ type: 'url', url: '...' }` object. The endpoint
    *   accepts a range of document formats — PDFs, Office documents (Word, Excel,
@@ -1902,6 +1924,15 @@ export class NutrientClient {
         ? { 'x-nutrient-api-version': options.apiVersion }
         : undefined;
 
+    // Data Extraction is a separate product with its own API key. Route the
+    // request via a per-call options copy so the rest of the client (which
+    // talks to the Processor API) keeps using the main key. Falls back to
+    // apiKey when extractApiKey is unset.
+    const parseOptions: NutrientClientOptions =
+      this.options.extractApiKey !== undefined
+        ? { ...this.options, apiKey: this.options.extractApiKey }
+        : this.options;
+
     // URL input → JSON body
     const remoteUrl = getRemoteUrl(input);
     if (remoteUrl !== null) {
@@ -1913,7 +1944,7 @@ export class NutrientClient {
           data: { instructions },
           ...(headers ? { headers } : {}),
         },
-        this.options,
+        parseOptions,
         'json',
       );
       return response.data;
@@ -1928,7 +1959,7 @@ export class NutrientClient {
         data: { instructions, file: normalizedFile },
         ...(headers ? { headers } : {}),
       },
-      this.options,
+      parseOptions,
       'json',
     );
     return response.data;

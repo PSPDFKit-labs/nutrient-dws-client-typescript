@@ -160,12 +160,33 @@ images. Unlike `sign()`, it is not restricted to PDFs.
 | `markdown`          | RAG, search indexing, content migration — anywhere structured text beats spatial data | `response.output.markdown` — a single Markdown string          |
 | `spatial` (default) | Form/invoice extraction, layout reconstruction, flows that need per-element confidence | `response.output.elements` — flat array of typed elements       |
 
+### Setup — separate Extract API key
+
+Data Extraction is a separate product from the DWS Processor with its own
+credit pool and its own API key. Pass both keys when constructing the client:
+
+```typescript
+const client = new NutrientClient({
+  apiKey: process.env.NUTRIENT_API_KEY!,          // Processor key
+  extractApiKey: process.env.NUTRIENT_EXTRACT_API_KEY!, // Data Extraction key
+});
+```
+
+`extractApiKey` is consulted only by `parse()`, `parseToMarkdown()`, and
+`parseElements()`. Every other method on the client (`convert`, `sign`, `ocr`,
+`merge`, …) keeps using `apiKey`. If you omit `extractApiKey`, the parse
+methods fall back to `apiKey` — that fallback only works on tenants whose
+single DWS key authorises both products.
+
 ### Quick start
 
 ```typescript
 import { NutrientClient } from '@nutrient-sdk/dws-client-typescript';
 
-const client = new NutrientClient({ apiKey: process.env.NUTRIENT_API_KEY! });
+const client = new NutrientClient({
+  apiKey: process.env.NUTRIENT_API_KEY!,
+  extractApiKey: process.env.NUTRIENT_EXTRACT_API_KEY!,
+});
 
 // Spatial elements (default) — paragraphs, tables, key-value regions, etc.
 const result = await client.parse('contract.pdf', { mode: 'understand' });
@@ -268,10 +289,6 @@ console.log(`Remaining: ${usage?.remainingCredits} extraction credits`);
 The full set of public types — `ExtractionCredits`, `ParseMode`, `ParseElement`,
 `ParagraphElement`, `TableElement`, `KeyValueRegionElement`, `ParseResponse`,
 etc. — is exported from the package root for downstream typing.
-
-A live smoke script that calls the real endpoint with a sample PDF and prints a
-parsed summary is available at `examples/src/parse_smoke.ts`. See the file
-header for the run recipe.
 
 
 ## Workflow System

@@ -307,6 +307,84 @@ describe('NutrientClient.parse()', () => {
       expect(mockSendRequest).not.toHaveBeenCalled();
     });
   });
+
+  describe('Data Extraction API key routing', () => {
+    it('routes parse() via extractApiKey when set, leaving apiKey untouched', async () => {
+      mockSendRequest.mockResolvedValue({
+        data: sampleSpatialResponse,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      } as never);
+
+      const client = new NutrientClient({
+        apiKey: 'processor-key',
+        extractApiKey: 'extract-key',
+      });
+      await client.parse('document.pdf');
+
+      const passedOptions = mockSendRequest.mock.calls[0]?.[1];
+      expect(passedOptions?.apiKey).toBe('extract-key');
+      // Original client options must not be mutated.
+      expect(client['options'].apiKey).toBe('processor-key');
+      expect(client['options'].extractApiKey).toBe('extract-key');
+    });
+
+    it('falls back to apiKey when extractApiKey is not provided', async () => {
+      mockSendRequest.mockResolvedValue({
+        data: sampleSpatialResponse,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      } as never);
+
+      const client = new NutrientClient({ apiKey: 'processor-key' });
+      await client.parse('document.pdf');
+
+      const passedOptions = mockSendRequest.mock.calls[0]?.[1];
+      expect(passedOptions?.apiKey).toBe('processor-key');
+    });
+
+    it('forwards an extractApiKey getter unchanged so http.ts resolves it lazily', async () => {
+      mockSendRequest.mockResolvedValue({
+        data: sampleSpatialResponse,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      } as never);
+
+      const extractGetter = jest.fn(() => Promise.resolve('lazy-extract-key'));
+      const client = new NutrientClient({
+        apiKey: 'processor-key',
+        extractApiKey: extractGetter,
+      });
+      await client.parse('document.pdf');
+
+      const passedOptions = mockSendRequest.mock.calls[0]?.[1];
+      expect(passedOptions?.apiKey).toBe(extractGetter);
+      // The client itself does not invoke the getter — that's http.ts's job.
+      expect(extractGetter).not.toHaveBeenCalled();
+    });
+
+    it('uses extractApiKey for URL inputs too', async () => {
+      mockGetRemoteUrl.mockReturnValue('https://example.com/doc.pdf');
+      mockSendRequest.mockResolvedValue({
+        data: sampleMarkdownResponse,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      } as never);
+
+      const client = new NutrientClient({
+        apiKey: 'processor-key',
+        extractApiKey: 'extract-key',
+      });
+      await client.parse('https://example.com/doc.pdf', { mode: 'text' });
+
+      const passedOptions = mockSendRequest.mock.calls[0]?.[1];
+      expect(passedOptions?.apiKey).toBe('extract-key');
+    });
+  });
 });
 
 describe('NutrientClient.parseToMarkdown()', () => {

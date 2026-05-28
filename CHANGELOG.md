@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - First-class client support for the Data Extraction API (`POST /extraction/parse`).
+  - `NutrientClient` accepts an `extractApiKey` option (string or async getter)
+    that `parse()` uses in place of `apiKey`. Data Extraction is a separate
+    product with its own credit pool, so the Processor key returns 403 against
+    `/extraction/parse`. When `extractApiKey` is omitted, `parse()` falls back
+    to `apiKey`, which works on tenants with global DWS keys.
   - `NutrientClient.parse(input, options?)` — full request/response surface with
     typed support for all four modes (`text`, `structure`, `understand`, `agentic`)
     and both output formats (`spatial`, `markdown`).
@@ -23,8 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `ParagraphElement`, `TableElement`, `KeyValueRegionElement`), plus error and
     metadata shapes (`ParseErrorResponse`, `ParseMetrics`, `ParseUsage`,
     `ParseConfiguration`).
-  - Live smoke script at `examples/src/parse_smoke.ts` for verifying against the
-    production endpoint.
   - Billing note: `/extraction/parse` debits the account's **extraction
     credits** bucket, which is separate from the **processor API credits** used
     by the rest of `NutrientClient`. The response surfaces this explicitly in

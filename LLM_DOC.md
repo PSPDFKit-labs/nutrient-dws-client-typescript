@@ -470,6 +470,17 @@ Billed against **extraction credits** (a separate bucket from processor API cred
 - `understand` — 9 extraction credits (default)
 - `agentic` — 18 extraction credits
 
+Data Extraction is a separate product with its own API key. Pass it as `extractApiKey` on the client constructor:
+
+```typescript
+const client = new NutrientClient({
+  apiKey: process.env.NUTRIENT_API_KEY!,
+  extractApiKey: process.env.NUTRIENT_EXTRACT_API_KEY!,
+});
+```
+
+Falls back to `apiKey` when `extractApiKey` is omitted (only works on tenants with global DWS keys).
+
 ```typescript
 // Full call: spatial elements with bounding boxes, confidence, reading order
 const result = await client.parse('invoice.pdf', {

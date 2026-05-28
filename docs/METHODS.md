@@ -463,12 +463,15 @@ is to feed document content into a downstream pipeline rather than render or
 transform the document itself.
 
 Accepts PDFs, Office documents (Word, Excel, PowerPoint), and images as input.
-Unlike `sign()`, it is not restricted to PDFs.
 
 Billed against **extraction credits** — a separate billing bucket from the
 processor API credits consumed by every other method on this client. See the
 [README's Data Extraction section](../README.md#data-extraction-extractionparse)
 for the full positioning, the per-mode comparison table, and worked recipes.
+
+Requires a Data Extraction API key — pass it as `extractApiKey` on the client
+constructor (see [Setup — separate Extract API key](../README.md#setup--separate-extract-api-key)).
+Falls back to `apiKey` if `extractApiKey` is omitted.
 
 **Parameters**:
 - `input: FileInputWithUrl` — The document to parse. Accepts local files (paths,
