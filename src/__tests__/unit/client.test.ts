@@ -264,6 +264,15 @@ describe('NutrientClient', () => {
           }),
       ).toThrow('Extract API key must be a string or a function that returns a Promise<string>');
     });
+
+    it('should throw ValidationError for empty-string extractApiKey', () => {
+      expect(
+        () => new NutrientClient({ apiKey: 'processor-key', extractApiKey: '' }),
+      ).toThrow(ValidationError);
+      expect(
+        () => new NutrientClient({ apiKey: 'processor-key', extractApiKey: '' }),
+      ).toThrow('Extract API key must not be an empty string');
+    });
   });
 
   describe('workflow()', () => {

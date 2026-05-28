@@ -158,8 +158,9 @@ export type RequestTypeMap = {
     };
     '/tokens': components['schemas']['CreateAuthTokenParameters'];
     /**
-     * `/extraction/parse` request body. Use exactly one of:
-     * - `file` + optional `instructions` for multipart upload (local files, buffers, streams).
+     * `/extraction/parse` request body. `instructions` is always sent (callers
+     * may pass an empty object for server defaults). Use exactly one of:
+     * - `file` + `instructions` for multipart upload (local files, buffers, streams).
      * - `instructions.url` only for URL-based input (sent as `application/json`).
      */
     '/extraction/parse': {

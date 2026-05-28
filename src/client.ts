@@ -123,14 +123,18 @@ export class NutrientClient {
       throw new ValidationError('Base URL must be a string');
     }
 
-    if (
-      options.extractApiKey !== undefined &&
-      typeof options.extractApiKey !== 'string' &&
-      typeof options.extractApiKey !== 'function'
-    ) {
-      throw new ValidationError(
-        'Extract API key must be a string or a function that returns a Promise<string>',
-      );
+    if (options.extractApiKey !== undefined) {
+      if (
+        typeof options.extractApiKey !== 'string' &&
+        typeof options.extractApiKey !== 'function'
+      ) {
+        throw new ValidationError(
+          'Extract API key must be a string or a function that returns a Promise<string>',
+        );
+      }
+      if (options.extractApiKey === '') {
+        throw new ValidationError('Extract API key must not be an empty string');
+      }
     }
   }
 
@@ -1865,7 +1869,9 @@ export class NutrientClient {
    *   - `mode` — processing pipeline (`'text'` | `'structure'` | `'understand'` | `'agentic'`).
    *   - `output.format` — `'spatial'` for typed elements or `'markdown'` for Markdown.
    *   - `output.includeWords` — include word-level OCR data inside elements.
-   *   - `language` — OCR language hint (string or array of ISO 639-2 codes).
+   *   - `language` — OCR language hint. Accepts a lowercase language name
+   *     (`'english'`, `'german'`), an ISO 639-2 code (`'eng'`, `'deu'`), an
+   *     array (`['eng', 'spa']`), or a `+`-joined multilingual string (`'eng+spa'`).
    *   - `apiVersion` — optional API-version header override.
    * @returns Promise resolving to the full `/extraction/parse` response envelope.
    *   Narrow on `output.markdown` / `output.elements` for type-safe field access,
@@ -1912,6 +1918,18 @@ export class NutrientClient {
    * ```
    */
   async parse(input: FileInputWithUrl, options?: ParseOptions): Promise<ParseResponse> {
+    // `text` mode emits markdown only — the server rejects this combination
+    // with a 400. Reject client-side so the caller gets a clear error without
+    // a network round-trip. Note: `parseElements()` blocks this at the type
+    // level via `Exclude<ParseOptions['mode'], 'text'>`, but the low-level
+    // `parse()` accepts any combination, so the runtime guard is needed here.
+    if (options?.mode === 'text' && options?.output?.format === 'spatial') {
+      throw new ValidationError(
+        "mode='text' is not supported with output.format='spatial'. " +
+          "Use output.format='markdown', or switch to mode='structure' / 'understand' / 'agentic' for spatial elements.",
+      );
+    }
+
     const instructions: ParseInstructions = {};
     if (options?.mode !== undefined) instructions.mode = options.mode;
     if (options?.output !== undefined) instructions.output = options.output;

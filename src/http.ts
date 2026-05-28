@@ -284,6 +284,10 @@ function extractErrorMessage(data: unknown): string | null {
     if (typeof errorData['error_message'] === 'string') {
       return errorData['error_message'];
     }
+    // DWS Extract uses `errorMessage` (camelCase) on every 4xx/5xx response.
+    if (typeof errorData['errorMessage'] === 'string') {
+      return errorData['errorMessage'];
+    }
 
     // Common error message fields
     if (typeof errorData['message'] === 'string') {

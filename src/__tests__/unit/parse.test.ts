@@ -304,6 +304,16 @@ describe('NutrientClient.parse()', () => {
       await expect(makeClient().parse('missing.pdf')).rejects.toBeInstanceOf(ValidationError);
       expect(mockSendRequest).not.toHaveBeenCalled();
     });
+
+    it("rejects mode='text' + output.format='spatial' before the network call", async () => {
+      // text mode emits markdown only — the server returns 400 for this combination.
+      // The client should surface a ValidationError without a network round-trip.
+      await expect(
+        makeClient().parse('document.pdf', { mode: 'text', output: { format: 'spatial' } }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      expect(mockSendRequest).not.toHaveBeenCalled();
+      expect(mockProcessFileInput).not.toHaveBeenCalled();
+    });
   });
 
   describe('Data Extraction API key routing', () => {

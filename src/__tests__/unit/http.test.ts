@@ -318,6 +318,35 @@ describe('HTTP Layer', () => {
       });
     });
 
+    it('should surface the camelCase errorMessage field from Extract API errors', async () => {
+      // DWS Extract returns `errorMessage` (camelCase) on every 4xx/5xx, not `message`.
+      const mockResponse = {
+        data: {
+          status: 400,
+          requestId: 'req_err_001',
+          errorMessage: "invalid mode: 'vlm'. Expected: text, structure, understand, agentic",
+          errorDetails: { source: 'request', code: 'invalid_request' },
+        },
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+      };
+
+      mockedAxios.mockResolvedValueOnce(mockResponse);
+
+      const config: RequestConfig<'POST', '/extraction/parse'> = {
+        endpoint: '/extraction/parse',
+        method: 'POST',
+        data: { instructions: {} },
+      };
+
+      await expect(sendRequest(config, mockClientOptions, 'json')).rejects.toMatchObject({
+        name: 'ValidationError',
+        message: "invalid mode: 'vlm'. Expected: text, structure, understand, agentic",
+        statusCode: 400,
+      });
+    });
+
     it('should handle network errors', async () => {
       const networkError = {
         isAxiosError: true,
