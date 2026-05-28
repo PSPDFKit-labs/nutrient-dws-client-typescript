@@ -1,11 +1,9 @@
 import { NutrientClient } from '../../client';
-import type {
-  ParseResponseMarkdown,
-  ParseResponseSpatial,
-  ParagraphElement,
-  TableElement,
-} from '../../types';
+import type { ParseResponseMarkdown, ParseResponseSpatial, extractComponents } from '../../types';
 import { NutrientError, ValidationError } from '../../errors';
+
+type ParagraphElement = extractComponents['schemas']['ParagraphElement'];
+type TableElement = extractComponents['schemas']['TableElement'];
 import * as inputsModule from '../../inputs';
 import * as httpModule from '../../http';
 

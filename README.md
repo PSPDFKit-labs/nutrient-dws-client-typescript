@@ -286,9 +286,23 @@ console.log(`Cost: ${usage?.cost} extraction credits`);
 console.log(`Remaining: ${usage?.remainingCredits} extraction credits`);
 ```
 
-The full set of public types — `ExtractionCredits`, `ParseMode`, `ParseElement`,
-`ParagraphElement`, `TableElement`, `KeyValueRegionElement`, `ParseResponse`,
-etc. — is exported from the package root for downstream typing.
+The hand-composed types (`ExtractionCredits`, `ParseOptions`, `ParseInstructions`,
+`ParseResponse`, `ParseResponseSpatial`, `ParseResponseMarkdown`,
+`ParseOutputOptions`) are exported from the package root. The spec primitives —
+`Mode`, `Element` and the six element subtypes, `Bounds`, `PageRef`, `Word`,
+`TableCell`, `KeyValuePair`, `KeyValueEntity`, `Metrics`, `Usage`,
+`Configuration`, `ParseErrorResponse`, etc. — live under the `extractComponents`
+namespace:
+
+```typescript
+import type { extractComponents } from '@nutrient-sdk/dws-client-typescript';
+
+type ParagraphElement = extractComponents['schemas']['ParagraphElement'];
+type TableElement = extractComponents['schemas']['TableElement'];
+```
+
+This mirrors how the Processor types are exposed via the existing `components`
+namespace.
 
 
 ## Workflow System

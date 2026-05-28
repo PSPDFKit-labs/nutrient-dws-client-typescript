@@ -22,12 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     the whole-document Markdown string directly.
   - `NutrientClient.parseElements(input, mode?, includeWords?)` — convenience
     wrapper returning the spatial elements array directly.
-  - Public types: `ParseMode`, `ParseOutputFormat`, `ParseOutputOptions`,
-    `ParseInstructions`, `ParseOptions`, `ParseResponse`, `ParseResponseSpatial`,
-    `ParseResponseMarkdown`, `ParseElement` (and per-element types like
-    `ParagraphElement`, `TableElement`, `KeyValueRegionElement`), plus error and
-    metadata shapes (`ParseErrorResponse`, `ParseMetrics`, `ParseUsage`,
-    `ParseConfiguration`).
+  - Public types: hand-composed `ParseOutputOptions`, `ParseInstructions`,
+    `ParseOptions`, `ParseResponse`, `ParseResponseSpatial`, `ParseResponseMarkdown`,
+    and `ExtractionCredits`. The spec primitives (`Mode`, `Element` and the six
+    subtypes, `Bounds`, `PageRef`, `Word`, `Metrics`, `Usage`, `Configuration`,
+    `ParseErrorResponse`, etc.) are accessible via the `extractComponents`
+    namespace re-export — same pattern as `components` for the Processor spec.
   - Billing note: `/extraction/parse` debits the account's **extraction
     credits** bucket, which is separate from the **processor API credits** used
     by the rest of `NutrientClient`. The response surfaces this explicitly in

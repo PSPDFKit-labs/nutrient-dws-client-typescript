@@ -11,11 +11,11 @@ import type {
   ParseInstructions,
   ParseOptions,
   ParseResponse,
-  ParseElement,
 } from './types';
 import { ValidationError, NutrientError } from './errors';
 import { workflow } from './workflow';
 import type { components, operations } from './generated/api-types';
+import type { components as extractComponents } from './generated/extract-types';
 import { BuildActions } from './build';
 import { processFileInput, isRemoteFileInput, getRemoteUrl } from './inputs';
 import { sendRequest } from './http';
@@ -2021,7 +2021,7 @@ export class NutrientClient {
     input: FileInputWithUrl,
     mode: Exclude<ParseOptions['mode'], 'text'> = 'structure',
     includeWords = false,
-  ): Promise<ParseElement[]> {
+  ): Promise<extractComponents['schemas']['Element'][]> {
     const result = await this.parse(input, {
       mode,
       output: { format: 'spatial', includeWords },

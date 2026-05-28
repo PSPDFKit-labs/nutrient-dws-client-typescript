@@ -478,11 +478,11 @@ Falls back to `apiKey` if `extractApiKey` is omitted.
   Buffers, streams), a URL string, or a `{ type: 'url', url: '...' }` object.
   The endpoint accepts PDFs, Office documents, and images.
 - `options?: ParseOptions` — Optional configuration:
-  - `mode: ParseMode` — `'text'` (1 cr/page, born-digital, Markdown only),
+  - `mode` — `'text'` (1 cr/page, born-digital, Markdown only),
     `'structure'` (1.5 cr/page, OCR + spatial layout),
     `'understand'` (9 cr/page, AI-augmented, default),
     or `'agentic'` (18 cr/page, VLM-augmented).
-  - `output.format: ParseOutputFormat` — `'spatial'` (typed elements with bounds
+  - `output.format` — `'spatial'` (typed elements with bounds
     and confidence) or `'markdown'` (whole-document Markdown string).
   - `output.includeWords` — include word-level OCR data inside elements.
   - `language` — OCR language hint (`'eng'`, `'deu'`, `['eng', 'spa']`, etc.).

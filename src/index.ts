@@ -37,38 +37,26 @@ export type {
   TypedWorkflowResult,
   WorkflowDryRunResult,
 
-  // Data Extraction (`/extraction/parse`) types
+  // Data Extraction (`/extraction/parse`) — hand-composed client-facing types.
+  // Schema primitives (Mode, Element and the six subtypes, Bounds, PageRef,
+  // Word, Metrics, Usage, Configuration, ParseErrorResponse, etc.) live in the
+  // `extractComponents` namespace below — same pattern as `components` for the
+  // Processor spec.
   ExtractionCredits,
-  ParseMode,
-  ParseOutputFormat,
   ParseOutputOptions,
-  ParseProcessingOptions,
   ParseInstructions,
   ParseOptions,
   ParseResponse,
   ParseResponseSpatial,
   ParseResponseMarkdown,
-  ParseElement,
-  ParagraphElement,
-  ParagraphRole,
-  FormulaElement,
-  PictureElement,
-  TableElement,
-  ParseTableCell,
-  KeyValueRegionElement,
-  KeyValuePair,
-  KeyValueEntity,
-  HandwritingElement,
-  ParseElementBase,
-  ParseBounds,
-  ParsePageRef,
-  ParseWord,
-  ParseMetrics,
-  ParseUsage,
-  ParseConfiguration,
-  ParseErrorResponse,
-  ParseErrorDetails,
-  ParseErrorFailingPath,
+
+  // Generated spec namespaces
+  components,
+  operations,
+  paths,
+  extractComponents,
+  extractOperations,
+  extractPaths,
 } from './types';
 
 // Utility exports
