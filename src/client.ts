@@ -8,12 +8,16 @@ import type {
   OutputTypeMap,
   WorkflowResult,
   UrlInput,
+  ParseInstructions,
+  ParseOptions,
+  ParseResponse,
 } from './types';
 import { ValidationError, NutrientError } from './errors';
 import { workflow } from './workflow';
 import type { components, operations } from './generated/api-types';
+import type { components as extractComponents } from './generated/extract-types';
 import { BuildActions } from './build';
-import { processFileInput, isRemoteFileInput } from './inputs';
+import { processFileInput, isRemoteFileInput, getRemoteUrl } from './inputs';
 import { sendRequest } from './http';
 import type { NormalizedFileData } from './inputs';
 import type { ApplicableAction } from './builders/workflow';
@@ -67,6 +71,13 @@ function normalizePageParams(
  *     return token;
  *   }
  * });
+ *
+ * // Data Extraction (`parse()`) needs its own key — it's a separate product
+ * // with its own credit pool. Pass both:
+ * const client = new NutrientClient({
+ *   apiKey: 'your-processor-key',
+ *   extractApiKey: 'your-extract-key',
+ * });
  * ```
  */
 export class NutrientClient {
@@ -110,6 +121,20 @@ export class NutrientClient {
 
     if (options.baseUrl && typeof options.baseUrl !== 'string') {
       throw new ValidationError('Base URL must be a string');
+    }
+
+    if (options.extractApiKey !== undefined) {
+      if (
+        typeof options.extractApiKey !== 'string' &&
+        typeof options.extractApiKey !== 'function'
+      ) {
+        throw new ValidationError(
+          'Extract API key must be a string or a function that returns a Promise<string>',
+        );
+      }
+      if (options.extractApiKey === '') {
+        throw new ValidationError('Extract API key must not be an empty string');
+      }
     }
   }
 
@@ -1704,10 +1729,7 @@ export class NutrientClient {
    * fs.writeFileSync('modified-document.pdf', Buffer.from(result.buffer));
    * ```
    */
-  async deletePages(
-    pdf: FileInputWithUrl,
-    pageIndices: number[],
-  ): Promise<OutputTypeMap['pdf']> {
+  async deletePages(pdf: FileInputWithUrl, pageIndices: number[]): Promise<OutputTypeMap['pdf']> {
     if (!pageIndices || pageIndices.length === 0) {
       throw new ValidationError('At least one page index is required for deletion');
     }
@@ -1807,5 +1829,229 @@ export class NutrientClient {
       .outputPdf({ optimize: options })
       .execute();
     return this.processTypedWorkflowResult(result);
+  }
+
+  /**
+   * Extracts structured content from a document via the Nutrient Data Extraction API
+   * (`POST /extraction/parse`).
+   *
+   * Designed for **content-extraction workflows** where the goal is to feed document
+   * content into a downstream pipeline rather than render or transform the document:
+   *
+   * - **RAG / search indexing / content migration** — use `output.format: 'markdown'`
+   *   to get a whole-document Markdown string ready for chunking, embedding, and
+   *   indexing in a vector store or search engine.
+   * - **Form and invoice extraction** — use `output.format: 'spatial'` (default) to
+   *   get a typed element list (paragraphs, tables, keyValueRegions, etc.) with
+   *   bounding boxes and confidence scores per element.
+   * - **Layout-aware document understanding** — combine `mode: 'understand'` or
+   *   `mode: 'agentic'` with spatial output for deep layout reconstruction and
+   *   semantic classification, including agentic workflows.
+   *
+   * See the README's Data Extraction section for per-mode positioning, a
+   * "when to use which mode" table, and worked recipes (RAG ingestion,
+   * form/invoice extraction).
+   *
+   * **Billing**: billed against **extraction credits**, a separate bucket from the
+   * **processor API credits** used by every other method on this client. Per-page
+   * costs: `text` 1 cr, `structure` 1.5 cr, `understand` 9 cr, `agentic` 18 cr.
+   *
+   * **Authentication**: Data Extraction is a separate product with its own API
+   * key. Pass it via `new NutrientClient({ apiKey, extractApiKey })`. If
+   * `extractApiKey` is omitted, this method falls back to `apiKey`, which only
+   * succeeds when the key is a global DWS key authorised for both products.
+   *
+   * @param input - The document to parse. Accepts local files (paths, Buffers,
+   *   streams), or a URL string / `{ type: 'url', url: '...' }` object. The endpoint
+   *   accepts a range of document formats — PDFs, Office documents (Word, Excel,
+   *   PowerPoint), and images. Unlike `sign()`, parsing is not restricted to PDFs.
+   * @param options - Optional parse configuration:
+   *   - `mode` — processing pipeline (`'text'` | `'structure'` | `'understand'` | `'agentic'`).
+   *   - `output.format` — `'spatial'` for typed elements or `'markdown'` for Markdown.
+   *   - `output.includeWords` — include word-level OCR data inside elements.
+   *   - `language` — OCR language hint. Accepts a lowercase language name
+   *     (`'english'`, `'german'`), an ISO 639-2 code (`'eng'`, `'deu'`), an
+   *     array (`['eng', 'spa']`), or a `+`-joined multilingual string (`'eng+spa'`).
+   *   - `apiVersion` — optional API-version header override.
+   * @returns Promise resolving to the full `/extraction/parse` response envelope.
+   *   Narrow on `output.markdown` / `output.elements` for type-safe field access,
+   *   or read `configuration.outputFormat` for the server-resolved value.
+   *   Extraction-credit accounting is at `usage.data_extraction_credits`.
+   *
+   * @example
+   * ```typescript
+   * // RAG ingestion — born-digital PDF → Markdown, cheapest path (1 cr/page).
+   * const md = await client.parse('whitepaper.pdf', { mode: 'text' });
+   * if (md.output.markdown !== undefined) {
+   *   console.log(md.output.markdown);
+   * }
+   *
+   * // Form/invoice extraction — spatial elements with bounds and confidence.
+   * const spatial = await client.parse('invoice.pdf', { mode: 'understand' });
+   * if (spatial.output.elements !== undefined) {
+   *   for (const el of spatial.output.elements) {
+   *     if (el.type === 'keyValueRegion') {
+   *       for (const pair of el.pairs) {
+   *         console.log(pair.key?.value, '→', pair.value?.value);
+   *       }
+   *     }
+   *   }
+   * }
+   *
+   * // OCR-backed extraction with word-level data and multilingual hint.
+   * const scan = await client.parse('scan.pdf', {
+   *   mode: 'structure',
+   *   output: { format: 'spatial', includeWords: true },
+   *   language: ['eng', 'spa'],
+   * });
+   *
+   * // URL input — the server fetches the document, no client-side download.
+   * const remote = await client.parse('https://example.com/doc.pdf');
+   *
+   * // Extraction-credit accounting (separate from processor API credits).
+   * console.log('Credits used:', remote.usage?.data_extraction_credits?.cost);
+   * console.log('Credits left:', remote.usage?.data_extraction_credits?.remainingCredits);
+   *
+   * // Convenience wrappers skip output-format discrimination entirely:
+   * const markdown = await client.parseToMarkdown('whitepaper.pdf');
+   * const elements = await client.parseElements('invoice.pdf', 'understand');
+   * ```
+   */
+  async parse(input: FileInputWithUrl, options?: ParseOptions): Promise<ParseResponse> {
+    // `text` mode emits markdown only — the server rejects this combination
+    // with a 400. Reject client-side so the caller gets a clear error without
+    // a network round-trip. Note: `parseElements()` blocks this at the type
+    // level via `Exclude<ParseOptions['mode'], 'text'>`, but the low-level
+    // `parse()` accepts any combination, so the runtime guard is needed here.
+    if (options?.mode === 'text' && options?.output?.format === 'spatial') {
+      throw new ValidationError(
+        "mode='text' is not supported with output.format='spatial'. " +
+          "Use output.format='markdown', or switch to mode='structure' / 'understand' / 'agentic' for spatial elements.",
+      );
+    }
+
+    const instructions: ParseInstructions = {};
+    if (options?.mode !== undefined) instructions.mode = options.mode;
+    if (options?.output !== undefined) instructions.output = options.output;
+    if (options?.language !== undefined) {
+      instructions.options = { language: options.language };
+    }
+
+    const headers: Record<string, string> | undefined =
+      options?.apiVersion !== undefined
+        ? { 'x-nutrient-api-version': options.apiVersion }
+        : undefined;
+
+    // Data Extraction is a separate product with its own API key. Route the
+    // request via a per-call options copy so the rest of the client (which
+    // talks to the Processor API) keeps using the main key. Falls back to
+    // apiKey when extractApiKey is unset.
+    const parseOptions: NutrientClientOptions =
+      this.options.extractApiKey !== undefined
+        ? { ...this.options, apiKey: this.options.extractApiKey }
+        : this.options;
+
+    // URL input → JSON body
+    const remoteUrl = getRemoteUrl(input);
+    if (remoteUrl !== null) {
+      instructions.url = remoteUrl;
+      const response = await sendRequest(
+        {
+          method: 'POST',
+          endpoint: '/extraction/parse',
+          data: { instructions },
+          ...(headers ? { headers } : {}),
+        },
+        parseOptions,
+        'json',
+      );
+      return response.data;
+    }
+
+    // Local file input → multipart upload
+    const normalizedFile = await processFileInput(input as FileInput);
+    const response = await sendRequest(
+      {
+        method: 'POST',
+        endpoint: '/extraction/parse',
+        data: { instructions, file: normalizedFile },
+        ...(headers ? { headers } : {}),
+      },
+      parseOptions,
+      'json',
+    );
+    return response.data;
+  }
+
+  /**
+   * Convenience wrapper around {@link NutrientClient.parse} that returns the
+   * whole-document Markdown directly. Billed against **extraction credits**
+   * (1 credit/page for `text`, 1.5 for `structure`, 9 for `understand`, 18 for
+   * `agentic`).
+   *
+   * @param input - The document to parse.
+   * @param mode - Processing mode (defaults to `'text'` for cheapest Markdown extraction).
+   * @returns Promise resolving to the Markdown string.
+   *
+   * @example
+   * ```typescript
+   * const markdown = await client.parseToMarkdown('document.pdf');
+   * console.log(markdown);
+   * ```
+   */
+  async parseToMarkdown(
+    input: FileInputWithUrl,
+    mode: ParseOptions['mode'] = 'text',
+  ): Promise<string> {
+    const result = await this.parse(input, {
+      mode,
+      output: { format: 'markdown' },
+    });
+    if (result.output.markdown === undefined) {
+      throw new NutrientError(
+        'parseToMarkdown expected markdown output, server returned ' +
+          result.configuration.outputFormat,
+        'PARSE_OUTPUT_MISMATCH',
+        { configuration: result.configuration as unknown as Record<string, unknown> },
+      );
+    }
+    return result.output.markdown;
+  }
+
+  /**
+   * Convenience wrapper around {@link NutrientClient.parse} that returns the
+   * spatial elements array directly. Not available with `mode: 'text'`.
+   * Billed against **extraction credits** (1.5/page for `structure`, 9 for
+   * `understand`, 18 for `agentic`).
+   *
+   * @param input - The document to parse.
+   * @param mode - Processing mode (defaults to `'structure'`). Must not be `'text'`.
+   * @param includeWords - Include word-level OCR data inside paragraphs and table cells.
+   * @returns Promise resolving to the array of spatial elements.
+   *
+   * @example
+   * ```typescript
+   * const elements = await client.parseElements('scan.pdf', 'understand');
+   * const tables = elements.filter(e => e.type === 'table');
+   * ```
+   */
+  async parseElements(
+    input: FileInputWithUrl,
+    mode: Exclude<ParseOptions['mode'], 'text'> = 'structure',
+    includeWords = false,
+  ): Promise<extractComponents['schemas']['Element'][]> {
+    const result = await this.parse(input, {
+      mode,
+      output: { format: 'spatial', includeWords },
+    });
+    if (result.output.elements === undefined) {
+      throw new NutrientError(
+        'parseElements expected spatial output, server returned ' +
+          result.configuration.outputFormat,
+        'PARSE_OUTPUT_MISMATCH',
+        { configuration: result.configuration as unknown as Record<string, unknown> },
+      );
+    }
+    return result.output.elements;
   }
 }

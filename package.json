@@ -85,7 +85,8 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build && npm run test",
-    "generate:types": "openapi-typescript dws-api-spec.yml -o src/generated/api-types.ts"
+    "generate:types": "openapi-typescript dws-api-spec.yml -o src/generated/api-types.ts",
+    "generate:types:extract": "openapi-typescript dws-data-extraction-spec.yml -o src/generated/extract-types.ts"
   },
   "dependencies": {
     "axios": "^1.13.2",

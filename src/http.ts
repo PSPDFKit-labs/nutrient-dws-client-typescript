@@ -159,6 +159,34 @@ function prepareRequestBody<Method extends Methods, Endpoint extends Endpoints<M
       }
 
       return axiosConfig;
+    } else if (config.endpoint === '/extraction/parse') {
+      const typedConfig = config as RequestConfig<'POST', '/extraction/parse'>;
+      const { file, instructions } = typedConfig.data;
+
+      if (file) {
+        // Multipart upload: file + JSON instructions
+        const formData = new FormData();
+        appendFileToFormData(formData, 'file', file);
+        if (instructions && Object.keys(instructions).length > 0) {
+          formData.append('instructions', JSON.stringify(instructions), {
+            contentType: 'application/json',
+          });
+        }
+        axiosConfig.data = formData;
+        axiosConfig.headers = {
+          ...axiosConfig.headers,
+          ...formData.getHeaders(),
+        };
+      } else {
+        // URL-only request → JSON body
+        axiosConfig.data = instructions;
+        axiosConfig.headers = {
+          ...axiosConfig.headers,
+          'Content-Type': 'application/json',
+        };
+      }
+
+      return axiosConfig;
     }
   }
   // Fallback, passing data as JSON
@@ -255,6 +283,10 @@ function extractErrorMessage(data: unknown): string | null {
     }
     if (typeof errorData['error_message'] === 'string') {
       return errorData['error_message'];
+    }
+    // DWS Extract uses `errorMessage` (camelCase) on every 4xx/5xx response.
+    if (typeof errorData['errorMessage'] === 'string') {
+      return errorData['errorMessage'];
     }
 
     // Common error message fields

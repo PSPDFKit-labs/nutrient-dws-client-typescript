@@ -133,6 +133,177 @@ const mergedPdf = await client.merge(['doc1.pdf', 'doc2.pdf', 'doc3.pdf']);
 
 For a complete list of available methods with examples, see the [Methods Documentation](docs/METHODS.md).
 
+## Data Extraction (`/extraction/parse`)
+
+`client.parse()` exposes Nutrient's Data Extraction API. It's designed for
+**content-extraction workflows** where you need to feed document content into a
+downstream pipeline rather than render or transform the document itself:
+
+- **RAG / search indexing / content migration** — pull a clean Markdown
+  representation of a document for chunking, embedding, and indexing in a
+  vector store or search engine.
+- **Form and invoice extraction** — pull structured fields (key/value pairs,
+  tables, semantic regions) out of business documents with bounding boxes and
+  confidence scores attached to every element.
+- **Layout-aware document understanding** — get a typed, page-anchored element
+  list (paragraphs with semantic roles, tables with cell spans, formulas in
+  LaTeX, pictures, handwriting) suitable for building document-comprehension
+  tooling, including agentic workflows.
+
+The endpoint accepts PDFs, Office documents (Word, Excel, PowerPoint), and
+images. Unlike `sign()`, it is not restricted to PDFs.
+
+### Choosing an output format
+
+| Format              | Best for                                                                    | Shape                                                           |
+| ------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `markdown`          | RAG, search indexing, content migration — anywhere structured text beats spatial data | `response.output.markdown` — a single Markdown string          |
+| `spatial` (default) | Form/invoice extraction, layout reconstruction, flows that need per-element confidence | `response.output.elements` — flat array of typed elements       |
+
+### Setup — separate Extract API key
+
+Data Extraction is a separate product from the DWS Processor with its own
+credit pool and its own API key. Pass both keys when constructing the client:
+
+```typescript
+const client = new NutrientClient({
+  apiKey: process.env.NUTRIENT_API_KEY!,          // Processor key
+  extractApiKey: process.env.NUTRIENT_EXTRACT_API_KEY!, // Data Extraction key
+});
+```
+
+`extractApiKey` is consulted only by `parse()`, `parseToMarkdown()`, and
+`parseElements()`. Every other method on the client (`convert`, `sign`, `ocr`,
+`merge`, …) keeps using `apiKey`. If you omit `extractApiKey`, the parse
+methods fall back to `apiKey` — that fallback only works on tenants whose
+single DWS key authorises both products.
+
+### Quick start
+
+```typescript
+import { NutrientClient } from '@nutrient-sdk/dws-client-typescript';
+
+const client = new NutrientClient({
+  apiKey: process.env.NUTRIENT_API_KEY!,
+  extractApiKey: process.env.NUTRIENT_EXTRACT_API_KEY!,
+});
+
+// Spatial elements (default) — paragraphs, tables, key-value regions, etc.
+const result = await client.parse('contract.pdf', { mode: 'understand' });
+if (result.output.elements !== undefined) {
+  for (const el of result.output.elements) {
+    if (el.type === 'table') console.log(`${el.rowCount}x${el.columnCount} table`);
+  }
+}
+
+// Whole-document Markdown from a born-digital PDF.
+const mdResult = await client.parse('report.pdf', { mode: 'text' });
+if (mdResult.output.markdown !== undefined) {
+  console.log(mdResult.output.markdown);
+}
+```
+
+### Modes — when to use which
+
+| Mode         | Credits / page | When to use                                                                                                               |
+| ------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `text`       | 1              | Born-digital documents only. No OCR, no AI. Fastest and cheapest path to Markdown.                                       |
+| `structure`  | 1.5            | OCR-based segmentation with bounding boxes. Handles scanned documents, images, and any input that requires OCR.          |
+| `understand` | 9              | Full pipeline with AI augmentation on top of OCR. Most accurate for tables, multi-column layouts, formulas, and forms.   |
+| `agentic`    | 18             | Builds on `understand` and adds a vision-language model. Best for image descriptions and complex visual layouts.         |
+
+### Recipes
+
+**RAG ingestion** — PDF → Markdown → chunks → embeddings → vector store:
+
+```typescript
+const result = await client.parse('whitepaper.pdf', { mode: 'text' });
+const markdown = result.output.markdown!;
+// Then: chunk on headings, embed, push to your vector store.
+```
+
+For born-digital PDFs, `mode: 'text'` is the cheapest path (1 credit/page).
+For scanned PDFs or images, switch to `mode: 'structure'` so OCR runs.
+
+Or use the convenience wrapper:
+
+```typescript
+const markdown = await client.parseToMarkdown('whitepaper.pdf');
+```
+
+**Form/invoice extraction** — PDF → spatial elements → structured object:
+
+```typescript
+const result = await client.parse('invoice.pdf', { mode: 'understand' });
+const elements = result.output.elements!;
+
+// Pull key/value pairs from form regions.
+const fields: Record<string, unknown> = {};
+for (const el of elements) {
+  if (el.type === 'keyValueRegion') {
+    for (const pair of el.pairs) {
+      if (pair.key && pair.value) {
+        fields[String(pair.key.value)] = pair.value.value;
+      }
+    }
+  }
+}
+
+// Walk tables — each cell carries row/col indices and span counts.
+for (const el of elements) {
+  if (el.type === 'table') {
+    console.log(`Table: ${el.rowCount}×${el.columnCount}`);
+    for (const cell of el.cells) {
+      console.log(`  [${cell.row}][${cell.column}] ${cell.text}`);
+    }
+  }
+}
+```
+
+For complex documents that mix dense images with text, step up to
+`mode: 'agentic'` so the VLM produces image descriptions and semantic
+classifications (18 credits/page).
+
+Or use the convenience wrapper to skip output-format discrimination entirely:
+
+```typescript
+const elements = await client.parseElements('invoice.pdf', 'understand');
+```
+
+### Billing — extraction credits vs processor credits
+
+`/extraction/parse` is billed against **extraction credits**, a separate
+billing bucket from the **processor API credits** consumed by `convert`,
+`ocr`, `sign`, `merge`, and every other endpoint on this client. The two
+buckets never debit each other.
+
+Extraction-credit accounting is returned per request:
+
+```typescript
+const result = await client.parse('document.pdf', { mode: 'structure' });
+const usage = result.usage?.data_extraction_credits;
+console.log(`Cost: ${usage?.cost} extraction credits`);
+console.log(`Remaining: ${usage?.remainingCredits} extraction credits`);
+```
+
+The hand-composed types (`ExtractionCredits`, `ParseOptions`, `ParseInstructions`,
+`ParseResponse`, `ParseResponseSpatial`, `ParseResponseMarkdown`,
+`ParseOutputOptions`) are exported from the package root. The spec primitives —
+`Mode`, `Element` and the six element subtypes, `Bounds`, `PageRef`, `Word`,
+`TableCell`, `KeyValuePair`, `KeyValueEntity`, `Metrics`, `Usage`,
+`Configuration`, `ParseErrorResponse`, etc. — live under the `extractComponents`
+namespace:
+
+```typescript
+import type { extractComponents } from '@nutrient-sdk/dws-client-typescript';
+
+type ParagraphElement = extractComponents['schemas']['ParagraphElement'];
+type TableElement = extractComponents['schemas']['TableElement'];
+```
+
+This mirrors how the Processor types are exposed via the existing `components`
+namespace.
+
 
 ## Workflow System
 
