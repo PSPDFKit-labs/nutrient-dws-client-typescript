@@ -1,9 +1,9 @@
 import type { components, operations } from '../generated/api-types';
 import type { components as extractComponents } from '../generated/extract-types';
 import type { NormalizedFileData } from '../inputs';
-import type { ValueOf } from '@typescript-eslint/eslint-plugin/dist/util';
 
 type ExtractSchemas = extractComponents['schemas'];
+type ValueOf<T> = T[keyof T];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // `/extraction/parse` — hand-composed request and response types
@@ -130,13 +130,45 @@ export interface ParseResponseMarkdown {
 export type ParseResponse = ParseResponseSpatial | ParseResponseMarkdown;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// `/account/{product}/usage` — types derived from the generated operation
+//
+// Unlike `/extraction/parse` above, the spec expresses this endpoint fully, so
+// these are plain aliases into `operations['get-account-product-usage']`
+// rather than hand-composed shapes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type UsageOp = operations['get-account-product-usage'];
+
+/** Product slug accepted by `NutrientClient.getUsage()`. */
+export type ProductName = UsageOp['parameters']['path']['product'];
+
+/** Successful `/account/{product}/usage` response body. */
+export type AccountUsage = UsageOp['responses']['200']['content']['application/json'];
+
+/** Subscription info nested in an {@link AccountUsage} response. */
+export type AccountUsageSubscription = NonNullable<AccountUsage['subscription']>;
+
+/** A single usage counter nested in an {@link AccountUsage} response. */
+export type UsageCounter = NonNullable<NonNullable<AccountUsage['usage']>['counters']>[number];
+
+/** Successful `/account/info` response body. */
+export type AccountInfo =
+  operations['get-account-info']['responses']['200']['content']['application/json'];
+
+/**
+ * The `/account/{product}/usage` endpoint has one path per product, so this
+ * is a template-literal union rather than a single literal — it lets the
+ * concrete path serve directly as the `ResponseTypeMap`/`RequestTypeMap` key,
+ * so the URL builder in `http.ts` needs no path-substitution logic.
+ */
+export type AccountUsageEndpoint = `/account/${ProductName}/usage`;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Endpoint request/response type maps
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type RequestTypeMap = {
-  GET: {
-    '/account/info': undefined;
-  };
+  GET: { '/account/info': undefined } & Record<AccountUsageEndpoint, undefined>;
   POST: {
     '/build': {
       instructions: components['schemas']['BuildInstructions'];
@@ -174,9 +206,7 @@ export type RequestTypeMap = {
 };
 
 export type ResponseTypeMap = {
-  GET: {
-    '/account/info': operations['get-account-info']['responses']['200']['content']['application/json'];
-  };
+  GET: { '/account/info': AccountInfo } & Record<AccountUsageEndpoint, AccountUsage>;
   POST: {
     '/build': ValueOf<components['responses']['BuildResponseOk']['content']>;
     '/analyze_build': components['schemas']['AnalyzeBuildResponse'];

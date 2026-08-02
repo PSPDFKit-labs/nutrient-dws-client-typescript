@@ -1,6 +1,6 @@
 {
   "name": "@nutrient-sdk/dws-client-typescript",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Node.js TypeScript client library for Nutrient Document Web Services (DWS) API",
   "keywords": [
     "nutrient",
@@ -66,6 +66,7 @@
     "docs/CONTRIBUTING.md",
     "docs/WORKFLOW.md",
     "docs/METHODS.md",
+    "docs/MIGRATION.md",
     "LLM_DOC.md",
     "LICENSE"
   ],
@@ -85,7 +86,7 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build && npm run test",
-    "generate:types": "openapi-typescript dws-api-spec.yml -o src/generated/api-types.ts",
+    "generate:types": "openapi-typescript dws-api-spec.yml --empty-objects-unknown --default-non-nullable=false -o src/generated/api-types.ts",
     "generate:types:extract": "openapi-typescript dws-data-extraction-spec.yml -o src/generated/extract-types.ts"
   },
   "dependencies": {

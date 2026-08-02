@@ -127,16 +127,11 @@ function prepareRequestBody<Method extends Methods, Endpoint extends Endpoints<M
       if (typedConfig.data.graphicImage) {
         appendFileToFormData(formData, 'graphicImage', typedConfig.data.graphicImage);
       }
+      // Omit the `data` part entirely when the caller supplies none: the server
+      // applies its own documented defaults (flatten: false, invisible signature),
+      // and sending a client-side default here would silently override that contract.
       if (typedConfig.data.data) {
         formData.append('data', JSON.stringify(typedConfig.data.data));
-      } else {
-        formData.append(
-          'data',
-          JSON.stringify({
-            signatureType: 'cades',
-            cadesLevel: 'b-lt',
-          }),
-        );
       }
       axiosConfig.data = formData;
 
