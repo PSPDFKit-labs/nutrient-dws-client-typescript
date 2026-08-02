@@ -384,7 +384,8 @@ To change an API type, update the spec (or vendor a newer one from upstream) and
 re-run the relevant generate script, then commit the spec and the regenerated output
 together. Bump the vendored spec when you need endpoints or fields that a newer
 upstream OpenAPI release adds. Full detail on the codegen flags, why they matter, and
-where a hand-written type is legitimate instead lives in the repo-root [`AGENTS.md`](../AGENTS.md).
+where a hand-written type is legitimate instead lives in
+[`generated-types.md`](generated-types.md).
 
 ### Pre-commit Hooks
 
