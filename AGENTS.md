@@ -34,7 +34,6 @@ npm run typecheck && npm run lint && npm run test:unit
 | If you are… | Read |
 | --- | --- |
 | changing an API type, or touching `src/generated/` | [docs/generated-types.md](docs/generated-types.md) |
-| finding your way around the code | [docs/architecture.md](docs/architecture.md) |
 | adding or changing a client method | [docs/METHODS.md](docs/METHODS.md) |
 | working on the workflow builder | [docs/WORKFLOW.md](docs/WORKFLOW.md) |
 | making a breaking change | [docs/MIGRATION.md](docs/MIGRATION.md) |
