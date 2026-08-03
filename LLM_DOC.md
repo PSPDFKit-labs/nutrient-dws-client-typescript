@@ -85,7 +85,7 @@ for (const counter of usage.usage?.counters ?? []) {
 }
 ```
 
-Requesting a product your organization isn't entitled to (or an unrecognized product slug) rejects with a `ValidationError` whose `statusCode` is `404`.
+Requesting a product your organization isn't entitled to rejects in one of two ways, and which one depends on the product — handle both. Some (e.g. `signing_workflow`) reject with a `ValidationError` whose `statusCode` is `404` and whose `details.error` is `'product_not_found'`; an unrecognized slug gives `'unknown_product'`. Others (observed live for `viewer`, `accessibility` and `data_extraction`) reject with an `AuthenticationError` whose `statusCode` is `401` — a response indistinguishable from an invalid API key, so don't treat it as proof the key is bad.
 
 #### createToken(params)
 Creates a new authentication token.

@@ -190,9 +190,16 @@ export class NutrientClient {
    *
    * Note: counters report `used` and `total` as decimal strings (or `null`),
    * not numbers — convert explicitly (e.g. `Number(counter.used)`) if you need
-   * to do arithmetic. An unknown or un-entitled product rejects with a
-   * {@link ValidationError} carrying `statusCode === 404` and
-   * `details.error` of `'unknown_product'` or `'product_not_found'`.
+   * to do arithmetic.
+   *
+   * A product your organization is not entitled to rejects in one of two ways,
+   * and which one you get depends on the product — handle both:
+   * - {@link ValidationError} with `statusCode === 404` and `details.error` of
+   *   `'unknown_product'` (unrecognized slug) or `'product_not_found'`.
+   * - {@link AuthenticationError} with `statusCode === 401`. Observed against
+   *   the live API for `viewer`, `accessibility` and `data_extraction`. This
+   *   response is indistinguishable from an invalid API key, so do not treat a
+   *   401 here as proof that the key itself is bad.
    */
   async getUsage(product: ProductName): Promise<AccountUsage> {
     const endpoint: AccountUsageEndpoint = `/account/${product}/usage`;

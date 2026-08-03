@@ -83,8 +83,9 @@ describeIntegration('Integration Tests with Live API - Direct Methods', () => {
 
     describe('createToken()', () => {
       it('should create a new authentication token', async () => {
+        // The API rejects 0 with "Expiration time must be greater than 0".
         const tokenParams = {
-          expirationTime: 0,
+          expirationTime: 3600,
         };
 
         const token = await client.createToken(tokenParams);

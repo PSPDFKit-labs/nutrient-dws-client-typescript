@@ -25,7 +25,27 @@ for (const counter of usage.usage?.counters ?? []) {
 }
 ```
 
-`getUsage(product)` rejects an unknown or un-entitled product with a `ValidationError` carrying `statusCode === 404` and `details.error` of `'unknown_product'` or `'product_not_found'`.
+`getUsage(product)` rejects a product your organization isn't entitled to in one of two ways, and which one you get depends on the product — handle both:
+
+- **`ValidationError`, `statusCode === 404`** — `details.error` is `'product_not_found'` for a real product you aren't entitled to, or `'unknown_product'` for an unrecognized slug. Observed for `signing_workflow`.
+- **`AuthenticationError`, `statusCode === 401`** — observed against the live API for `viewer`, `accessibility` and `data_extraction`. This response is byte-identical to the one an invalid API key produces, so a 401 here is *not* evidence that your key is wrong.
+
+```ts
+import { ValidationError, AuthenticationError } from '@nutrient-sdk/dws-client-typescript';
+
+try {
+  const usage = await client.getUsage('data_extraction');
+  // …
+} catch (err) {
+  if (err instanceof ValidationError && err.statusCode === 404) {
+    // definitively not entitled, or the slug is wrong
+  } else if (err instanceof AuthenticationError) {
+    // either not entitled to this product, or the key is invalid — indistinguishable
+  } else {
+    throw err;
+  }
+}
+```
 
 ### 2) `apiKeys` removed from the account info response
 
