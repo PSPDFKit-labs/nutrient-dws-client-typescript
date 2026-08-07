@@ -270,7 +270,10 @@ describe('HTTP Layer', () => {
       expect(mockFormDataInstance.append).toHaveBeenCalledWith('instructions', expect.any(String));
     });
 
-    it('should not append a data part to /sign when the caller omits data', async () => {
+    // The multipart /sign handler rejects a request with no `data` part outright:
+    // HTTP 400, `failingPaths: [{ path: '$.data', details: 'must be present' }]`.
+    // An empty object is accepted and lets the server apply its own defaults.
+    it('should append an empty data part to /sign when the caller omits data', async () => {
       const mockResponse = {
         data: 'signed-document-bytes',
         status: 200,
@@ -298,7 +301,7 @@ describe('HTTP Layer', () => {
         filename: 'file.pdf',
         contentType: 'application/pdf',
       });
-      expect(mockFormDataInstance.append).not.toHaveBeenCalledWith('data', expect.any(String));
+      expect(mockFormDataInstance.append).toHaveBeenCalledWith('data', JSON.stringify({}));
     });
 
     it('should append the caller-provided data part to /sign when given', async () => {

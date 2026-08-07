@@ -119,7 +119,7 @@ const result = await client.sign('document.pdf', {
 });
 ```
 
-**b) Behavioral, no type error:** calling `sign(pdf)` with *no* `data` argument at all used to send a client-side default of `{ signatureType: 'cades', cadesLevel: 'b-lt' }`. That default is gone. The request now omits `data` entirely and the server's own documented default applies instead (`flatten: false`, an invisible signature, no CAdES level forced).
+**b) Behavioral, no type error:** calling `sign(pdf)` with *no* `data` argument at all used to send a client-side default of `{ signatureType: 'cades', cadesLevel: 'b-lt' }`. That default is gone — the request now sends an empty `data` object and the server's own documented default applies instead (`flatten: false`, an invisible signature, no CAdES level forced).
 
 ```ts
 // v2.x — implicitly signed CAdES B-LT

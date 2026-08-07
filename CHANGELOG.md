@@ -63,7 +63,7 @@ of each.
   still works unchanged.
 - **Breaking (behavioral):** `client.sign(file)` called *without* a `data`
   argument no longer sends a client-side default of `{ signatureType: 'cades',
-  cadesLevel: 'b-lt' }`. The request now omits `data` entirely, so the
+  cadesLevel: 'b-lt' }`. The request now sends an empty `data` object, so the
   server's documented default applies instead (`flatten: false`, invisible
   signature, no CAdES level forced). This is a library decision, not an
   upstream spec change — the client previously overrode the server's default

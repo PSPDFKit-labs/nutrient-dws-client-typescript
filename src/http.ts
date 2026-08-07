@@ -127,12 +127,11 @@ function prepareRequestBody<Method extends Methods, Endpoint extends Endpoints<M
       if (typedConfig.data.graphicImage) {
         appendFileToFormData(formData, 'graphicImage', typedConfig.data.graphicImage);
       }
-      // Omit the `data` part entirely when the caller supplies none: the server
-      // applies its own documented defaults (flatten: false, invisible signature),
-      // and sending a client-side default here would silently override that contract.
-      if (typedConfig.data.data) {
-        formData.append('data', JSON.stringify(typedConfig.data.data));
-      }
+      // The `data` part is mandatory on the multipart /sign endpoint — omitting it
+      // fails with HTTP 400 `$.data must be present`. An empty object satisfies the
+      // requirement without overriding the server's own defaults (flatten: false,
+      // invisible signature), which a client-side default value would.
+      formData.append('data', JSON.stringify(typedConfig.data.data ?? {}));
       axiosConfig.data = formData;
 
       return axiosConfig;
