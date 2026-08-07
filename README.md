@@ -36,6 +36,7 @@ yarn add @nutrient-sdk/dws-client-typescript
 
 ## Migration Guides
 
+- v3.0.0: See `docs/MIGRATION.md` for breaking changes — `getAccountInfo()` deprecated in favor of `getUsage(product)`, `apiKeys` removed from the account info response, 14 full-word `OcrLanguage` values removed, and `sign()`'s `signatureType`/`cadesLevel` fields (and their default) removed.
 - v2.0.0: See `docs/MIGRATION.md` for URL input changes and `sign()` restrictions.
 
 ## Integration with Coding Agents

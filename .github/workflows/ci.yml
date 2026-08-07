@@ -28,6 +28,40 @@ jobs:
     - name: Run type checking
       run: npm run typecheck
 
+  generated-types-drift:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Verify src/generated/ matches the vendored specs
+      run: |
+        set -e
+        fail=0
+        npm run generate:types -- --check || fail=1
+        npm run generate:types:extract -- --check || fail=1
+        if [ "$fail" -ne 0 ]; then
+          echo ""
+          echo "::error::The type files in src/generated/ are out of date or were hand-edited."
+          echo "api-types.ts and extract-types.ts are generated from dws-api-spec.yml and"
+          echo "dws-data-extraction-spec.yml respectively — they must never be edited by hand."
+          echo ""
+          echo "To fix: run 'npm run generate:types' and 'npm run generate:types:extract'"
+          echo "locally and commit the result. If the generated output looks wrong, fix"
+          echo "the vendored spec or the codegen flags in package.json — never patch the"
+          echo "generated file directly. See AGENTS.md and src/generated/README.md."
+          exit 1
+        fi
+
   unit-tests:
     runs-on: ubuntu-latest
     needs: lint-and-type-check
@@ -63,7 +97,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint-and-type-check, unit-tests]
+    needs: [lint-and-type-check, generated-types-drift, unit-tests]
 
     steps:
     - uses: actions/checkout@v4

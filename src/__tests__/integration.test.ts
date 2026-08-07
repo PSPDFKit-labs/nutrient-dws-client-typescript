@@ -45,14 +45,47 @@ describeIntegration('Integration Tests with Live API - Direct Methods', () => {
         expect(accountInfo).toBeDefined();
         expect(accountInfo.subscriptionType).toBeDefined();
         expect(typeof accountInfo.subscriptionType).toBe('string');
-        expect(accountInfo.apiKeys).toBeDefined();
+      }, 30000);
+    });
+
+    describe('getUsage()', () => {
+      it('should retrieve product usage information', async () => {
+        const usage = await client.getUsage('processor');
+
+        // The envelope is present regardless of entitlement, so this much always holds.
+        expect(usage).toBeDefined();
+        expect(typeof usage).toBe('object');
+        const counters = usage.usage?.counters;
+        expect(counters === undefined || Array.isArray(counters)).toBe(true);
+
+        // Counter presence depends on account entitlement. Skipping the per-counter
+        // assertions below is only valid when that's an explicit, visible branch —
+        // not a loop that silently iterates zero times.
+        if (counters === undefined || counters.length === 0) {
+          console.warn(
+            'getUsage(): account returned no usage counters for "processor"; counter-shape assertions skipped for this run.',
+          );
+          return;
+        }
+
+        for (const counter of counters) {
+          expect(
+            counter.used === undefined || counter.used === null || typeof counter.used === 'string',
+          ).toBe(true);
+          expect(
+            counter.total === undefined ||
+              counter.total === null ||
+              typeof counter.total === 'string',
+          ).toBe(true);
+        }
       }, 30000);
     });
 
     describe('createToken()', () => {
       it('should create a new authentication token', async () => {
+        // The API rejects 0 with "Expiration time must be greater than 0".
         const tokenParams = {
-          expirationTime: 0,
+          expirationTime: 3600,
         };
 
         const token = await client.createToken(tokenParams);

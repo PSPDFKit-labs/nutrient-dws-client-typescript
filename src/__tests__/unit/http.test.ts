@@ -270,6 +270,71 @@ describe('HTTP Layer', () => {
       expect(mockFormDataInstance.append).toHaveBeenCalledWith('instructions', expect.any(String));
     });
 
+    // The multipart /sign handler rejects a request with no `data` part outright:
+    // HTTP 400, `failingPaths: [{ path: '$.data', details: 'must be present' }]`.
+    // An empty object is accepted and lets the server apply its own defaults.
+    it('should append an empty data part to /sign when the caller omits data', async () => {
+      const mockResponse = {
+        data: 'signed-document-bytes',
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      };
+
+      mockedAxios.mockResolvedValueOnce(mockResponse);
+
+      const config: RequestConfig<'POST', '/sign'> = {
+        endpoint: '/sign',
+        method: 'POST',
+        data: {
+          file: {
+            data: new Uint8Array([1, 2, 3, 4]),
+            filename: 'file.pdf',
+            contentType: 'application/pdf',
+          },
+        },
+      };
+
+      await sendRequest(config, mockClientOptions, 'arraybuffer');
+
+      expect(mockFormDataInstance.append).toHaveBeenCalledWith('file', expect.anything(), {
+        filename: 'file.pdf',
+        contentType: 'application/pdf',
+      });
+      expect(mockFormDataInstance.append).toHaveBeenCalledWith('data', JSON.stringify({}));
+    });
+
+    it('should append the caller-provided data part to /sign when given', async () => {
+      const mockResponse = {
+        data: 'signed-document-bytes',
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      };
+
+      mockedAxios.mockResolvedValueOnce(mockResponse);
+
+      const config: RequestConfig<'POST', '/sign'> = {
+        endpoint: '/sign',
+        method: 'POST',
+        data: {
+          file: {
+            data: new Uint8Array([1, 2, 3, 4]),
+            filename: 'file.pdf',
+            contentType: 'application/pdf',
+          },
+          data: { flatten: true },
+        },
+      };
+
+      await sendRequest(config, mockClientOptions, 'arraybuffer');
+
+      expect(mockFormDataInstance.append).toHaveBeenCalledWith(
+        'data',
+        JSON.stringify({ flatten: true }),
+      );
+    });
+
     it('should handle 401 authentication error', async () => {
       const mockResponse = {
         data: { error: 'Invalid API key' },
@@ -631,6 +696,60 @@ describe('HTTP Layer', () => {
       expect(userAgent).toMatch(
         /^nutrient-dws-client-typescript\/\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/,
       );
+    });
+
+    it('should build the real URL for /account/{product}/usage with no request body', async () => {
+      const mockResponse = {
+        data: { subscription: { type: 'paid', status: 'active' } },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      };
+
+      mockedAxios.mockResolvedValueOnce(mockResponse);
+
+      // A product other than 'processor' so a hardcoded-path bug cannot pass.
+      const config: RequestConfig<'GET', '/account/signing_workflow/usage'> = {
+        endpoint: '/account/signing_workflow/usage',
+        method: 'GET',
+        data: undefined,
+      };
+
+      await sendRequest(config, mockClientOptions, 'json');
+
+      expect(mockedAxios).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'GET',
+          url: 'https://api.test.com/v1/account/signing_workflow/usage',
+        }),
+      );
+      const requestArgs = (mockedAxios as unknown as jest.Mock).mock.calls[0] as [
+        { data?: unknown },
+      ];
+      expect(requestArgs[0]?.data).toBeUndefined();
+    });
+
+    it('should reject with ValidationError for a 404 unknown_product response', async () => {
+      const mockResponse = {
+        data: { error: 'unknown_product' },
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+      };
+
+      mockedAxios.mockResolvedValueOnce(mockResponse);
+
+      const config: RequestConfig<'GET', '/account/signing_workflow/usage'> = {
+        endpoint: '/account/signing_workflow/usage',
+        method: 'GET',
+        data: undefined,
+      };
+
+      await expect(sendRequest(config, mockClientOptions, 'json')).rejects.toMatchObject({
+        name: 'ValidationError',
+        statusCode: 404,
+        details: { error: 'unknown_product' },
+      });
     });
   });
 });

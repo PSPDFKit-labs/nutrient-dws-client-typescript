@@ -14,15 +14,34 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Process documents and download the result
+         * Process documents
          * @description This endpoint lets you use [Build instructions](#tag/Build-API) to process a document. This allows you to
          *     assemble a PDF from multiple parts, such as an existing document in a supported content type, a blank page,
          *     or an HTML page. You can apply one or more actions, such as watermarking, rotating pages, or importing
          *     annotations. Once the entire PDF is generated from its parts, you can also apply additional actions,
          *     such as optical character recognition (OCR), to the assembled PDF itself.
-         *
          */
         post: operations["build-document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/process_office_template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Populate a DOCX template
+         * @description This endpoint populates a DOCX template with JSON model data and returns the resulting DOCX document.
+         */
+        post: operations["process-office-template"];
         delete?: never;
         options?: never;
         head?: never;
@@ -46,9 +65,184 @@ export interface paths {
          *
          *     Note: Make sure to provide the correct `content_type` parameter for each of your file parts to get accurate results.
          *     Otherwise, the endpoint might not correctly identify conversion features such as Office or image conversion.
-         *
          */
         post: operations["analyze_build"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/convert_to_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert to PDF
+         * @description Convert documents of any [supported format](#tag/File-Type-Support) to PDF.
+         *
+         *     This endpoint is a simplified interface to the [Build API's](#tag/Document-Editing/operation/build-document)
+         *     document conversion capabilities. Under the hood, it creates a Build API request with a single
+         *     `FilePart`. For more advanced use cases, use the `/build` endpoint directly.
+         */
+        post: operations["processor-convert-to-pdf"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/generate_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert HTML to PDF
+         * @description Generate PDF from HTML with assets (CSS, images, fonts, etc.).
+         *
+         *     This endpoint is a simplified interface to the [Build API's](#tag/Document-Editing/operation/build-document)
+         *     HTML conversion capabilities. Under the hood, it creates a Build API request with a `HTMLPart`.
+         *     For more advanced use cases, use the `/build` endpoint directly.
+         */
+        post: operations["processor-generate-pdf"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/ocr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform OCR
+         * @description Perform optical character recognition (OCR) on a PDF document to extract text and make it searchable.
+         *
+         *     This endpoint is a simplified interface to the [Build API's](#tag/Document-Editing/operation/build-document)
+         *     OCR capabilities. Under the hood, it creates a Build API request with a single `FilePart` and applies
+         *     an `ocr` action. For more advanced use cases, use the `/build` endpoint directly.
+         *
+         *     See the [OCR Language Support](#tag/OCR-Language-Support) section for a complete list of supported languages.
+         */
+        post: operations["processor-ocr"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/pdfua": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * PDF/UA Auto-Tagging
+         * @description Automatically tag any PDF into a PDF/UA-compliant, screen-reader-ready document in a single API call.
+         *
+         *     This endpoint is a simplified interface to the [Build API](#tag/Document-Editing/operation/build-document)
+         *     with PDF/UA output. For more advanced use cases, use the `/build` endpoint directly.
+         */
+        post: operations["processor-pdfua"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/redact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Redact documents
+         * @description Create and optionally apply redactions to a PDF document.
+         *
+         *     This endpoint is a simplified interface to the [Build API's](#tag/Document-Editing/operation/build-document)
+         *     Redaction capabilities. Under the hood, it creates a Build API request with `createRedactions`
+         *     and optionally `applyRedactions` actions. For more advanced use cases, use the `/build` endpoint directly.
+         */
+        post: operations["processor-redact-document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/watermark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add watermark to PDF
+         * @description Add text or image watermarks to all pages of a PDF document.
+         *
+         *     This endpoint is a simplified interface to the [Build API](#tag/Document-Editing/operation/build-document).
+         *     For more advanced use cases, use the `/build` endpoint directly.
+         */
+        post: operations["processor-watermark"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processor/md_to_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert Markdown to PDF
+         * @description Convert markdown content to a styled PDF document.
+         *
+         *     The conversion pipeline transforms Markdown into styled HTML (with syntax highlighting, GFM extensions,
+         *     and optional custom CSS), then renders the HTML to PDF.
+         *
+         *     This endpoint supports three content types:
+         *     - **`application/json`** — JSON body with `markdown` field and optional options.
+         *     - **`text/markdown`** — Raw Markdown body (no options, no images).
+         *     - **`multipart/form-data`** — Markdown file + optional image assets + optional JSON options.
+         *
+         *     Conversion is [CommonMark](https://spec.commonmark.org/0.31.2/)-compliant and supports
+         *     [GFM](https://github.github.com/gfm/) extensions (tables, strikethrough, autolinks, task lists,
+         *     alerts) plus footnotes, superscript/subscript, highlight, underline, and description lists.
+         */
+        post: operations["processor-md-to-pdf"];
         delete?: never;
         options?: never;
         head?: never;
@@ -67,7 +261,6 @@ export interface paths {
         /**
          * Digitally sign a PDF file
          * @description Use this endpoint to digitally sign a PDF file.
-         *
          */
         post: operations["sign-file"];
         delete?: never;
@@ -88,13 +281,11 @@ export interface paths {
         /**
          * Generate a new API token
          * @description Use this endpoint to generate a new API token. All request body parameters are optional.
-         *
          */
         post: operations["generate-token"];
         /**
          * Revoke an API token
          * @description Use this endpoint to revoke an API token.
-         *
          */
         delete: operations["revoke-token"];
         options?: never;
@@ -111,10 +302,32 @@ export interface paths {
         };
         /**
          * Get account information
-         * @description Use this endpoint to get information about your account, such as the number of credits you have left.
+         * @deprecated
+         * @description > This endpoint is deprecated. Please use `GET /account/{product}/usage` instead.
          *
+         *     Use this endpoint to get information about your account, such as the number of credits you have left.
          */
         get: operations["get-account-info"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account/{product}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get usage for a product
+         * @description Use this endpoint to get subscription and usage counters for a specific product.
+         */
+        get: operations["get-account-product-usage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -135,7 +348,6 @@ export interface paths {
         /**
          * Redact sensitive information from a document
          * @description Redacts sensitive information from a document based on the provided criteria.
-         *
          */
         post: operations["ai-redact"];
         delete?: never;
@@ -148,7 +360,8 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @example {
+        /**
+         * @example {
          *       "cost": 3.5,
          *       "required_features": {
          *         "annotation_api": [
@@ -198,16 +411,15 @@ export interface components {
          *           }
          *         ]
          *       }
-         *     } */
+         *     }
+         */
         AnalyzeBuildResponse: {
             /**
              * @description Total cost in credits charged after executing the request.
-             *
              * @example 1.5
              */
             cost?: number;
-            /** @description Usage statistics for all features required to execute the request.
-             *      */
+            /** @description Usage statistics for all features required to execute the request. */
             required_features?: {
                 [key: string]: {
                     /**
@@ -220,7 +432,6 @@ export interface components {
                      *
                      *     * `per_use` - `units` field represent number of uses of this particular feature in a Build request.
                      *     * `per_output_page` - `units` field represents number of pages of the Build request output.
-                     *
                      * @example per_use
                      * @enum {string}
                      */
@@ -235,8 +446,7 @@ export interface components {
                      * @example 1.5
                      */
                     cost?: number;
-                    /** @description JSON paths to the parts of instructions where the feature was used.
-                     *      */
+                    /** @description JSON paths to the parts of instructions where the feature was used. */
                     usage?: string[];
                 };
             };
@@ -244,7 +454,6 @@ export interface components {
         /**
          * Instant JSON
          * @description Instant JSON is a format for bringing annotations and bookmarks into a modern format while keeping all important properties to make the Instant JSON spec work with PDF.
-         *
          */
         InstantJson: {
             /** @enum {string} */
@@ -275,22 +484,21 @@ export interface components {
             /**
              * @description List of operations that can be performed with the generated token.
              *     Defaults to all operations.
-             *
              * @example [
              *       "digital_signatures_api"
              *     ]
              */
             allowedOperations?: ("annotations_api" | "compression_api" | "data_extraction_api" | "digital_signatures_api" | "document_editor_api" | "html_conversion_api" | "image_conversion_api" | "image_rendering_api" | "email_conversion_api" | "linearization_api" | "ocr_api" | "office_conversion_api" | "pdfa_api" | "pdf_to_office_conversion_api" | "redaction_api")[];
-            /** @description List of origins that can use the generated token.
+            /**
+             * @description List of origins that can use the generated token.
              *     By default, allows all origins.
-             *      */
+             */
             allowedOrigins?: string[];
             /**
-             * @description The expiration time of the token in seconds.
-             *
+             * @description The expiration time of the token in seconds. Must be between 1 and 86400 (24 hours).
              * @default 3600
              */
-            expirationTime: number;
+            expirationTime?: number;
         };
         CreateAuthTokenResponse: {
             /**
@@ -315,9 +523,10 @@ export interface components {
                 pages?: number[] | {
                     /** @description Starting page index (0-based). */
                     start: number;
-                    /** @description Ending page index. A positive number denotes an absolute page index,
+                    /**
+                     * @description Ending page index. A positive number denotes an absolute page index,
                      *     negative number denotes a relative page index from the end of the document.
-                     *      */
+                     */
                     end: number;
                 };
             }[];
@@ -328,7 +537,7 @@ export interface components {
              * @default stage
              * @enum {string}
              */
-            redaction_state: "stage" | "apply";
+            redaction_state?: "stage" | "apply";
             /** @description Optional configuration for the redaction process. */
             options?: {
                 /** @description Configuration for confidence-based filtering of redactions. */
@@ -338,32 +547,43 @@ export interface components {
                 };
             };
         };
-        FileHandle: {
+        /**
+         * Remote file
+         * @description Object pointing to remote file
+         */
+        UrlFileHandle: {
             /**
              * @description Specifies the URL from a file can be downloaded
              * @example https://remote-file-storage/input-file
              */
             url: string;
-            /** @description Optional parameter to verify a downloaded file using provided SHA256 hash.
+            /**
+             * @description Optional parameter to verify a downloaded file using provided SHA256 hash.
              *     It is expected to be base16 encoded using lowercase.
-             *      */
+             */
             sha256?: string;
-        } | string;
-        /** @description Defines the range of pages in a document. The indexing starts from 0. It is possible
+        };
+        /**
+         * Uploaded file
+         * @description Specifies the name of multipart part containing a file
+         * @example file-from-multipart
+         */
+        MultipartFileHandle: string;
+        FileHandle: components["schemas"]["UrlFileHandle"] | components["schemas"]["MultipartFileHandle"];
+        /**
+         * @description Defines the range of pages in a document. The indexing starts from 0. It is possible
          *     to use negative numbers to refer to pages from the last page. For example, `-1` refers to the last page.
-         *      */
+         */
         PageRange: {
             /** @default 0 */
             start?: number;
             /** @default -1 */
             end?: number;
         };
-        /** @description Defines the layout of the generated pages.
-         *      */
+        /** @description Defines the layout of the generated pages. */
         PageLayout: {
             /**
              * @description The orientation of generated pages.
-             *
              * @default portrait
              * @enum {string}
              */
@@ -371,34 +591,30 @@ export interface components {
             size?: ("A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "A7" | "A8" | "Letter" | "Legal") | {
                 /**
                  * @description The width of pages in mm.
-                 *
                  * @example 210
                  */
                 width?: number;
                 /**
                  * @description The height of pages in mm.
-                 *
                  * @example 297
                  */
                 height?: number;
             };
-            /** @description The margins of generated pages. All dimensions are in mm.
-             *      */
+            /** @description The margins of generated pages. All dimensions are in mm. */
             margin?: {
                 /** @default 0 */
-                left: number;
+                left?: number;
                 /** @default 0 */
-                top: number;
+                top?: number;
                 /** @default 0 */
-                right: number;
+                right?: number;
                 /** @default 0 */
-                bottom: number;
+                bottom?: number;
             };
         };
         ApplyInstantJsonAction: {
             /**
              * @description Apply the Instant JSON to the document to import annotations or forms to a document.
-             *
              * @enum {string}
              */
             type: "applyInstantJson";
@@ -407,7 +623,6 @@ export interface components {
         ApplyXfdfAction: {
             /**
              * @description Apply the XFDF to the document to import annotations to a document.
-             *
              * @enum {string}
              */
             type: "applyXfdf";
@@ -420,7 +635,6 @@ export interface components {
             /**
              * @description If `true`, plain text annotations will be converted to rich text annotations.
              *     If `false`, all text annotations will be plain text annotations.
-             *
              * @default true
              */
             richTextEnabled?: boolean;
@@ -428,47 +642,52 @@ export interface components {
         FlattenAction: {
             /**
              * @description Flatten the annotations in the document.
-             *
              * @enum {string}
              */
             type: "flatten";
-            /** @description Annotation IDs to flatten. These can be annotation IDs or `pdfObjectId`s.
+            /**
+             * @description Annotation IDs to flatten. These can be annotation IDs or `pdfObjectId`s.
              *     If not specified, all annotations will be flattened.
-             *      */
+             */
             annotationIds?: (string | number)[];
         };
         /**
-         * @description Language to be used for the OCR text extraction. You can find the list of supported languages in our [guides](https://www.nutrient.io/guides/document-engine/ocr/language-support/).
-         *     In addition to the languages outlined in the guides, we support the 3 letter ISO 639-2 code for some other languages.
+         * @description OCR dictionary to be used for the OCR text extraction. You can specify either the full language name for supported languages (e.g., `english`, `german`), the ISO 639-2 language code (e.g., `eng`, `deu`)
+         *     or use one of special dictionaries such as `chi_sim_vert` for Simplified Chinese vertical text or `deu_frak` for German Fraktur script.
          *
+         *     It's also possible to provide a list of languages for multilingual documents (e.g., `["english", "german"]`).
+         *
+         *     See the [OCR Language Support](#tag/OCR-Language-Support) section for a complete list of supported languages and dictionaries for OCR.
          * @example english
          * @enum {string}
          */
-        OcrLanguage: "afrikaans" | "albanian" | "arabic" | "armenian" | "azerbaijani" | "basque" | "belarusian" | "bengali" | "bosnian" | "bulgarian" | "catalan" | "chinese" | "croatian" | "czech" | "danish" | "dutch" | "english" | "finnish" | "french" | "german" | "indonesian" | "italian" | "malay" | "norwegian" | "polish" | "portuguese" | "serbian" | "slovak" | "slovenian" | "spanish" | "swedish" | "turkish" | "welsh" | "afr" | "amh" | "ara" | "asm" | "aze" | "bel" | "ben" | "bod" | "bos" | "bre" | "bul" | "cat" | "ceb" | "ces" | "chr" | "cos" | "cym" | "dan" | "deu" | "div" | "dzo" | "ell" | "eng" | "enm" | "epo" | "equ" | "est" | "eus" | "fao" | "fas" | "fil" | "fin" | "fra" | "frk" | "frm" | "fry" | "gla" | "gle" | "glg" | "grc" | "guj" | "hat" | "heb" | "hin" | "hrv" | "hun" | "hye" | "iku" | "ind" | "isl" | "ita" | "jav" | "jpn" | "kan" | "kat" | "kaz" | "khm" | "kir" | "kmr" | "kor" | "kur" | "lao" | "lat" | "lav" | "lit" | "ltz" | "mal" | "mar" | "mkd" | "mlt" | "mon" | "mri" | "msa" | "mya" | "nep" | "nld" | "nor" | "oci" | "ori" | "osd" | "pan" | "pol" | "por" | "pus" | "que" | "ron" | "rus" | "san" | "sin" | "slk" | "slv" | "snd" | "sp1" | "spa" | "sqi" | "srp" | "sun" | "swa" | "swe" | "syr" | "tam" | "tat" | "tel" | "tgk" | "tgl" | "tha" | "tir" | "ton" | "tur" | "uig" | "ukr" | "urd" | "uzb" | "vie" | "yid" | "yor";
+        OcrLanguage: "croatian" | "czech" | "danish" | "dutch" | "english" | "finnish" | "french" | "german" | "indonesian" | "italian" | "malay" | "norwegian" | "polish" | "portuguese" | "serbian" | "slovak" | "slovenian" | "spanish" | "swedish" | "turkish" | "afr" | "amh" | "ara" | "asm" | "aze" | "aze_cyrl" | "bel" | "ben" | "bod" | "bos" | "bre" | "bul" | "cat" | "ceb" | "ces" | "chi_sim" | "chi_sim_vert" | "chi_tra" | "chi_tra_vert" | "chr" | "cos" | "cym" | "dan" | "dan_frak" | "deu" | "deu_frak" | "digits" | "div" | "dzo" | "ell" | "eng" | "enm" | "epo" | "equ" | "est" | "eus" | "fao" | "fas" | "fil" | "fin" | "fra" | "frk" | "frm" | "fry" | "gla" | "gle" | "glg" | "grc" | "guj" | "hat" | "heb" | "hin" | "hrv" | "hun" | "hye" | "iku" | "ind" | "isl" | "ita" | "ita_old" | "jav" | "jpn" | "jpn_vert" | "kan" | "kat" | "kat_old" | "kaz" | "khm" | "kir" | "kmr" | "kor" | "kor_vert" | "kur" | "lao" | "lat" | "lav" | "lit" | "ltz" | "mal" | "mar" | "mkd" | "mlt" | "mon" | "mri" | "msa" | "mya" | "nep" | "nld" | "nor" | "oci" | "ocrb" | "ori" | "osd" | "pan" | "pol" | "por" | "pus" | "que" | "ron" | "rus" | "san" | "sin" | "slk" | "slk_frak" | "slv" | "snd" | "spa" | "spa_old" | "sqi" | "srp" | "srp_latn" | "sun" | "swa" | "swe" | "syr" | "tam" | "tat" | "tel" | "tgk" | "tgl" | "tha" | "tir" | "ton" | "tur" | "uig" | "ukr" | "urd" | "uzb" | "uzb_cyrl" | "vie" | "yid" | "yor";
         OcrAction: {
             /**
              * @description Perform optical character recognition (OCR) in the document.
-             *
              * @enum {string}
              */
             type: "ocr";
             language: components["schemas"]["OcrLanguage"] | components["schemas"]["OcrLanguage"][];
+            /**
+             * @description When true, OCR is skipped for pages that already contain text (born-digital pages).
+             * @default false
+             */
+            skipOcrForSearchableDocuments?: boolean;
         };
         RotateAction: {
             /**
              * @description Rotate all pages by the angle specified.
-             *
              * @enum {string}
              */
             type: "rotate";
             /**
              * @description The angle by which the pages should be rotated, clockwise.
-             *
              * @enum {number}
              */
             rotateBy: 90 | 180 | 270;
         };
-        WatermarkDimension: {
+        WatermarkDimension: number | string | {
             /**
              * @description Dimension value
              * @example 100
@@ -483,28 +702,25 @@ export interface components {
         BaseWatermarkAction: {
             /**
              * @description Watermark all pages with text watermark.
-             *
              * @enum {string}
              */
             type: "watermark";
-            width:  components["schemas"]["WatermarkDimension"];
-            height: components["schemas"]["WatermarkDimension"];
-            top?: components["schemas"]["WatermarkDimension"];
-            right?: components["schemas"]["WatermarkDimension"];
-            bottom?: components["schemas"]["WatermarkDimension"];
-            left?: components["schemas"]["WatermarkDimension"];
+            width: Record<string, unknown> & components["schemas"]["WatermarkDimension"];
+            height: Record<string, unknown> & components["schemas"]["WatermarkDimension"];
+            top?: Record<string, unknown> & components["schemas"]["WatermarkDimension"];
+            right?: Record<string, unknown> & components["schemas"]["WatermarkDimension"];
+            bottom?: Record<string, unknown> & components["schemas"]["WatermarkDimension"];
+            left?: Record<string, unknown> & components["schemas"]["WatermarkDimension"];
             /**
              * @description Rotation of the watermark in counterclockwise degrees.
-             *
              * @default 0
              */
-            rotation: number;
+            rotation?: number;
             /** @description Watermark opacity. 0 is fully transparent, 1 is fully opaque. */
             opacity?: number;
         };
         TextWatermarkAction: components["schemas"]["BaseWatermarkAction"] & {
-            /** @description Text used for watermarking
-             *      */
+            /** @description Text used for watermarking */
             text: string;
             /**
              * @description The font to render the text. Fonts are client specific, so you should only use fonts you know are present in the browser where they should be displayed. If a font isn't found, PSPDFKit will automatically fall back to a sans-serif font.
@@ -546,7 +762,7 @@ export interface components {
         /** BaseAction */
         BaseAction: {
             /** @description Sub-action to execute after the action has been executed. */
-            subAction?: Record<string, never>;
+            subAction?: Record<string, unknown>;
         };
         /** GoToAction */
         GoToAction: components["schemas"]["BaseAction"] & {
@@ -646,7 +862,6 @@ export interface components {
          *
          *     All actions have a `type` property. Depending on the type, the action object
          *     includes additional properties.
-         *
          * @example {
          *       "type": "goTo",
          *       "pageIndex": 0
@@ -659,7 +874,6 @@ export interface components {
         PdfObjectId: number;
         /**
          * @description Object of arbitrary properties attached to the annotations. PSPDFKit won't modify this data when processing annotations.
-         *
          * @example {
          *       "foo": "bar"
          *     }
@@ -686,7 +900,8 @@ export interface components {
              * @example 01DNEDPQQ22W49KDXRFPG4EPEQ
              */
             id?: string;
-            /** @description Array of annotation flags.
+            /**
+             * @description Array of annotation flags.
              *
              *     | Flag | Description |
              *     | ---- | ----------- |
@@ -699,7 +914,7 @@ export interface components {
              *     | readOnly | Don't allow the annotation to be deleted or its properties modified. |
              *     | locked | Same as `readOnly` but allows changing annotation contents. |
              *     | lockedContents | Don't allow the contents of the annotation to be modified. |
-             *      */
+             */
             flags?: ("noPrint" | "noZoom" | "noRotate" | "noView" | "hidden" | "invisible" | "readOnly" | "locked" | "toggleNoView" | "lockedContents")[];
             /**
              * Format: date-time
@@ -792,7 +1007,6 @@ export interface components {
          *     - `us-zip-code` — matches a USA-style zip code. The format expected is `XXXXX`, `XXXXX-XXXX` or `XXXXX/XXXX`.
          *     - `vin` — matches US and ISO Standard 3779 Vehicle Identification Number.
          *     The format expects 17 characters, with the last 5 characters being numeric. `I`, `i`, `O`, `o` ,`Q`, `q`, and `_` characters are not allowed.
-         *
          * @example email-address
          * @enum {string}
          */
@@ -802,20 +1016,17 @@ export interface components {
             /**
              * @description Determines if redaction annotations are created on top of annotations whose
              *     content match the provided preset.
-             *
              * @default true
              */
             includeAnnotations?: boolean;
             /**
              * @description The index of the page from where you want to start the search.
-             *
              * @default 0
              */
             start?: number;
             /**
              * @description Starting from start, the number of pages to search. Default is to the end of
              *     the document.
-             *
              * @default null
              */
             limit?: number;
@@ -823,33 +1034,28 @@ export interface components {
         CreateRedactionsStrategyOptionsRegex: {
             /**
              * @description Regex search term used for searching for text to redact.
-             *
              * @example @pspdfkit\\.com
              */
             regex: string;
             /**
              * @description Determines if redaction annotations are created on top of annotations whose
              *     content match the provided preset.
-             *
              * @default true
              */
             includeAnnotations?: boolean;
             /**
              * @description Determines if the search will be case sensitive.
-             *
              * @default true
              */
             caseSensitive?: boolean;
             /**
              * @description The index of the page from where you want to start the search.
-             *
              * @default 0
              */
             start?: number;
             /**
              * @description Starting from start, the number of pages to search. Default is to the end of
              *     the document.
-             *
              * @default null
              */
             limit?: number;
@@ -857,33 +1063,60 @@ export interface components {
         CreateRedactionsStrategyOptionsText: {
             /**
              * @description Search term used for searching for text to redact.
-             *
              * @example @nutrient.io
              */
             text: string;
             /**
              * @description Determines if redaction annotations are created on top of annotations whose
              *     content match the provided preset.
-             *
              * @default true
              */
             includeAnnotations?: boolean;
             /**
              * @description Determines if the search will be case sensitive.
-             *
              * @default false
              */
             caseSensitive?: boolean;
             /**
              * @description The index of the page from where you want to start the search.
-             *
              * @default 0
              */
             start?: number;
             /**
              * @description Starting from start, the number of pages to search. Default is to the end of
              *     the document.
-             *
+             * @default null
+             */
+            limit?: number;
+        };
+        CreateRedactionsStrategyOptionsWordBased: {
+            /**
+             * @description Search term used for word-based search to redact. Whitespace between
+             *     characters (line breaks, tabs, Unicode space variants) is ignored when
+             *     matching, so phrases that wrap across lines, tables, or columns can be
+             *     matched as a single hit. Punctuation must still match exactly.
+             * @example Smith, John
+             */
+            word_based: string;
+            /**
+             * @description Determines if redaction annotations are created on top of annotations whose
+             *     content match the provided query.
+             * @default true
+             */
+            includeAnnotations?: boolean;
+            /**
+             * @description Determines if the search will be case sensitive.
+             * @default false
+             */
+            caseSensitive?: boolean;
+            /**
+             * @description The index of the page from where you want to start the search.
+             * @default 0
+             */
+            start?: number;
+            /**
+             * @description Starting from start, the number of pages to search. Default is to the end of
+             *     the document.
              * @default null
              */
             limit?: number;
@@ -892,7 +1125,6 @@ export interface components {
             /**
              * @description Creates redactions according to the given strategy. Once redactions are created, they need to be applied using the `applyRedactions` action.
              *     You can configure some visual aspects of the redaction annotation, including its background color, overlay text, and so on, by passing an optional `content` object.
-             *
              * @enum {string}
              */
             type: "createRedactions";
@@ -909,37 +1141,80 @@ export interface components {
             /** @enum {string} */
             strategy: "text";
             strategyOptions: components["schemas"]["CreateRedactionsStrategyOptionsText"];
+        } | {
+            /** @enum {string} */
+            strategy: "word_based";
+            strategyOptions: components["schemas"]["CreateRedactionsStrategyOptionsWordBased"];
         });
         ApplyRedactionsAction: {
             /**
              * @description Applies the redactions created by an earlier `createRedactions` action.
-             *
              * @enum {string}
              */
             type: "applyRedactions";
         };
         BuildAction: components["schemas"]["ApplyInstantJsonAction"] | components["schemas"]["ApplyXfdfAction"] | components["schemas"]["FlattenAction"] | components["schemas"]["OcrAction"] | components["schemas"]["RotateAction"] | components["schemas"]["WatermarkAction"] | components["schemas"]["CreateRedactionsAction"] | components["schemas"]["ApplyRedactionsAction"];
-        /** @example {
+        /**
+         * @example {
          *       "file": "pdf-file-from-multipart"
-         *     } */
+         *     }
+         */
         FilePart: {
             file: components["schemas"]["FileHandle"];
             /** @description The password for the input file */
             password?: string;
             pages?: components["schemas"]["PageRange"];
-            layout?: Record<string, never> & components["schemas"]["PageLayout"];
+            layout?: Record<string, unknown> & components["schemas"]["PageLayout"];
             /**
              * @description The content type of the file. Used to determine the file type when the file content type is not available and can't be inferred.
-             *
              * @example application/pdf
              */
             content_type?: string;
+            /**
+             * @description Controls how markup (comments, tracked changes) is preserved during DOCX document conversion.
+             *     Only relevant for DOCX documents (.docx).
+             *     - `noMarkup` — Render the document as if all changes were accepted.
+             *     - `original` — Render the document as if all changes were rejected.
+             *     - `simpleMarkup` — Render with changes accepted and comments as annotations.
+             *     - `allMarkup` — Render with all markups visible, including redlines and comments.
+             * @default noMarkup
+             * @enum {string}
+             */
+            markup_mode?: "noMarkup" | "original" | "simpleMarkup" | "allMarkup";
+            /**
+             * @description BCP 47 language tag used for email (EML and MSG) conversion.
+             *     Controls email date/time formatting and header label translations.
+             *     When omitted for email conversion, Document Engine uses `en-US`.
+             * @example de-DE
+             */
+            email_language?: string;
+            /**
+             * @description IANA timezone name used for email (EML and MSG) conversion.
+             *     Controls the timezone used when rendering email timestamps.
+             *     Document Engine validates the value against the system timezone database.
+             *     When omitted for email conversion, Document Engine uses `UTC`.
+             * @example Europe/Prague
+             */
+            email_timezone?: string;
+            /**
+             * @description Renders headers and footers as half-transparent when converting Word documents to PDF.
+             *     Only applicable to Word documents (.doc, .docx, .odt, .rtf). Default: false
+             * @default false
+             */
+            half_transparent_header_footer?: boolean;
+            /**
+             * @description Specifies whether to render only the print area for spreadsheet files.
+             *     Only relevant for spreadsheet files (e.g., XLSX, XLS).
+             *     When true, only the defined print area is rendered.
+             *     When false, the entire spreadsheet content is rendered.
+             * @default false
+             */
+            render_only_print_area?: boolean;
             actions?: components["schemas"]["BuildAction"][];
         };
         HTMLPart: {
             html: components["schemas"]["FileHandle"];
-            /** @description List of asset names imported in the HTML. References the name passed in the multipart request.
-             *      */
+            /** @description List of asset names imported in the HTML. References the name passed in the multipart request. */
             assets?: string[];
             layout?: components["schemas"]["PageLayout"];
             actions?: components["schemas"]["BuildAction"][];
@@ -961,19 +1236,18 @@ export interface components {
          * @example 7KPZW8XFGM4F1C92KWBK1B748M
          */
         DocumentId: string;
-        /** @description This allows to reference a document stored on Document Engine.
+        /**
+         * @description This allows to reference a document stored on Document Engine.
          *     It is also possible to refer to currently scoped file by using special ID:
          *       ```
          *       {"document": {"id": "#self"}}
          *       ```
-         *      */
+         */
         DocumentPart: {
             document: {
-                // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
                 id: components["schemas"]["DocumentId"] | "#self";
                 /**
                  * @description The name of the layer to be used.
-                 *
                  * @example my-existing-layer
                  */
                 layer?: string;
@@ -1029,25 +1303,22 @@ export interface components {
              * @description If set to `true`, the resulting PDF file will be linearized.
              *     This means that the document will be optimized in a special way that allows it to be loaded faster over the network.
              *     You need the `Linearization` feature to be enabled in your Nutrient Document Engine license in order to use this option.
-             *
              * @default false
              */
             linearize?: boolean;
         };
-        /** @description Object representing PDF output.
-         *      */
+        /** @description Object representing PDF output. */
         BasePDFOutput: {
             metadata?: components["schemas"]["Metadata"];
             labels?: components["schemas"]["Label"][];
-            /** @description Defines the password which allows to open a file with defined
+            /**
+             * @description Defines the password which allows to open a file with defined
              *     permissions
-             *      */
+             */
             user_password?: string;
-            /** @description Defines the password which allows to manage the permissions for the file
-             *      */
+            /** @description Defines the password which allows to manage the permissions for the file */
             owner_password?: string;
-            /** @description Defines the permissions which are granted when a file is opened with user password
-             *      */
+            /** @description Defines the permissions which are granted when a file is opened with user password */
             user_permissions?: components["schemas"]["PDFUserPermission"][];
             optimize?: components["schemas"]["OptimizePdf"];
         };
@@ -1063,19 +1334,16 @@ export interface components {
              *     The default value is `pdfa-1b`.
              *
              *     These are the only supported conformance levels at this time.
-             *
              * @enum {string}
              */
             conformance?: "pdfa-1a" | "pdfa-1b" | "pdfa-2a" | "pdfa-2u" | "pdfa-2b" | "pdfa-3a" | "pdfa-3u";
             /**
              * @description When set to true, produces vector based graphic elements where applicable. For example: fonts and paths.
-             *
              * @default true
              */
             vectorization?: boolean;
             /**
              * @description When set to true, produces raster based graphic elements where applicable. For example: images.
-             *
              * @default true
              */
             rasterization?: boolean;
@@ -1093,51 +1361,42 @@ export interface components {
             type: "image";
             /**
              * @description The format of the rendered image.
-             *
              * @default png
              * @enum {string}
              */
             format?: "png" | "jpeg" | "jpg" | "webp";
             pages?: components["schemas"]["PageRange"];
-            /** @description The width of the rendered image in pixels. You must specify at least one of either width, height or dpi
-             *      */
+            /** @description The width of the rendered image in pixels. You must specify at least one of either width, height or dpi */
             width?: number;
-            /** @description The height of the rendered image in pixels. You must specify at least one of either width, height or dpi
-             *      */
+            /** @description The height of the rendered image in pixels. You must specify at least one of either width, height or dpi */
             height?: number;
-            /** @description The resolution of the rendered image in dots per inch. You must specify at least one of either width, height or dpi
-             *      */
+            /** @description The resolution of the rendered image in dots per inch. You must specify at least one of either width, height or dpi */
             dpi?: number;
         };
         /**
          * JSONContentOutput
          * @description JSON with document contents. Returned for `json-content` output type.
-         *
          */
         JSONContentOutput: {
             /** @enum {string} */
             type: "json-content";
             /**
              * @description When set to true, extracts document text. Text is extracted via OCR process.
-             *
              * @default true
              */
             plainText?: boolean;
             /**
              * @description When set to true, extracts structured document text. This includes text words, characters, lines and paragraphs.
-             *
              * @default false
              */
             structuredText?: boolean;
             /**
              * @description When set to true, extracts key-value pairs detected within the document contents. Example of detected values are phone numbers, email addresses, currencies, numbers, dates, etc.
-             *
              * @default false
              */
             keyValuePairs?: boolean;
             /**
              * @description When set to true, extracts tabular data from the document.
-             *
              * @default true
              */
             tables?: boolean;
@@ -1147,7 +1406,6 @@ export interface components {
         OfficeOutput: {
             /**
              * @description The output office file type.
-             *
              * @enum {string}
              */
             type: "docx" | "xlsx" | "pptx";
@@ -1161,7 +1419,6 @@ export interface components {
              *
              *     * `page` layout keeps the original structure of the document, segmented by page.
              *     * `reflow` layout converts the document into a continuous flow of text, without page breaks.
-             *
              * @enum {string}
              */
             layout?: "page" | "reflow";
@@ -1173,23 +1430,22 @@ export interface components {
         };
         BuildOutput: components["schemas"]["PDFOutput"] | components["schemas"]["PDFAOutput"] | components["schemas"]["PDFUAOutput"] | components["schemas"]["ImageOutput"] | components["schemas"]["JSONContentOutput"] | components["schemas"]["OfficeOutput"] | components["schemas"]["HTMLOutput"] | components["schemas"]["MarkdownOutput"];
         BuildInstructions: {
-            /** @description Parts of the document to be built.
+            /**
+             * @description Parts of the document to be built.
              *
              *     Multiple types of parts are supported:
              *     * `FilePart` that represents a binary input file that can be either a part name in the `multipart/form-data` request or an URL of a remote file.
              *     * `HTMLPart` that represents an HTML input file along with it's assets.
              *     * `NewPagePart` that represents a document with empty pages.
              *     * `DocumentPart` that represents a document (with optional layer) managed by Nutrient Document Engine. Only applicable if used in a Document Engine context.
-             *      */
+             */
             parts: components["schemas"]["Part"][];
-            /** @description Actions to be performed on the document after it is built.
-             *      */
+            /** @description Actions to be performed on the document after it is built. */
             actions?: components["schemas"]["BuildAction"][];
             output?: components["schemas"]["BuildOutput"];
         };
         /**
          * @description Page text extracted via OCR process. This property is present only when `plainText` is set to `true`.
-         *
          * @example Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa.
          */
         PlainText: string;
@@ -1288,7 +1544,6 @@ export interface components {
             bbox: components["schemas"]["JsonContentsBbox"];
             /**
              * @description The detected key text. `#` is the value does not have a key.
-             *
              * @example #
              */
             content: string;
@@ -1303,7 +1558,6 @@ export interface components {
             content: string;
             /**
              * @description The value type. One of the following: `Unknown`, `PhoneNumber`, `EmailAddress`, `Currency`, `Number`, `DateTime`, `String`, `PostCode`, `URL`, `Percentage`, `Symbol`, `VatIDValue`, `TimePeriod`, `IBAN`, `BIC`, `CreditCard`, `UID`, `PostalAddress`, `VIN`, `SSN`
-             *
              * @example Currency
              */
             dataType: string;
@@ -1396,41 +1650,249 @@ export interface components {
             }[];
         };
         /**
+         * @description Full office template payload for the multipart `model` request part.
+         *     The preferred shape is `{ "config": { ... }, "model": { ... } }`.
+         *     The API also accepts legacy bare model objects for backward compatibility.
+         */
+        OfficeTemplateModel: {
+            /** @description Configuration for Office template processing. */
+            config?: {
+                /**
+                 * @description Pair of delimiters that encloses a template marker. The `model` object associates a
+                 *     template marker with the corresponding substitution in the produced document.
+                 */
+                delimiter?: {
+                    /**
+                     * @default {
+                     * @example {{
+                     */
+                    start?: string;
+                    /**
+                     * @default }
+                     * @example }}
+                     */
+                    end?: string;
+                };
+            };
+            /**
+             * @description The object that contains placeholder substitutions, loops, nested objects, and image marker values.
+             * @example {
+             *       "placeholder": "replacement value",
+             *       "enabled": true,
+             *       "count": 3,
+             *       "logo": {
+             *         "_type": "image",
+             *         "source": "base64",
+             *         "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP8z8DwHwAF+wJ/lxS6RQAAAABJRU5ErkJggg==",
+             *         "format": "png"
+             *       },
+             *       "loop-name": [
+             *         {
+             *           "placeholder-within-loop": "replacement value",
+             *           "another-placeholder-within-loop": "replacement value 2"
+             *         },
+             *         {
+             *           "placeholder-within-loop": "another replacement value",
+             *           "another-placeholder-within-loop": "another replacement value 2"
+             *         }
+             *       ]
+             *     }
+             */
+            model?: {
+                [key: string]: string | number | boolean | null | {
+                    [key: string]: unknown;
+                }[] | {
+                    [key: string]: unknown;
+                } | (({
+                    /** @enum {string} */
+                    _type: "image";
+                    /** @enum {string} */
+                    source: "base64" | "dataUrl" | "url";
+                    /** @description Base64 payload or data URL string for `source: "base64"` / `source: "dataUrl"`. */
+                    data?: string;
+                    /** @description HTTP(S) URL used when `source: "url"`. */
+                    url?: string;
+                    /** @description Legacy alias for `url` when `source: "url"`. */
+                    path?: string;
+                    /** @enum {string} */
+                    format?: "png" | "jpg" | "jpeg" | "gif" | "bmp" | "tif" | "tiff";
+                    /** @enum {string} */
+                    sizing?: "original" | "fixed" | "fit-width" | "fit-height" | "fit-max";
+                    width?: number;
+                    height?: number;
+                    borderWidth?: number;
+                    borderColor?: string;
+                    borderStyle?: string;
+                    link?: string;
+                    caption?: string;
+                    captionLabel?: string;
+                    captionPosition?: string;
+                    rotation?: number;
+                    pageNumber?: number;
+                    altText?: string;
+                    title?: string;
+                } & {
+                    [key: string]: unknown;
+                }) & ({
+                    /** @enum {unknown} */
+                    source?: "base64" | "dataUrl";
+                } | ({
+                    /** @enum {unknown} */
+                    source?: "url";
+                } | unknown | unknown)));
+            };
+        };
+        /**
+         * @description Specifies the URL from a file can be downloaded
+         * @example https://remote-file-storage/input-file
+         */
+        url: string;
+        /** @description The password for the input file */
+        password: string;
+        layout: Record<string, unknown> & components["schemas"]["PageLayout"];
+        /**
+         * @description The content type of the file. Used to determine the file type when the file content type is not available and can't be inferred.
+         * @example application/pdf
+         */
+        content_type: string;
+        /**
+         * @description Controls how markup (comments, tracked changes) is preserved during DOCX document conversion.
+         *     Only relevant for DOCX documents (.docx).
+         *     - `noMarkup` — Render the document as if all changes were accepted.
+         *     - `original` — Render the document as if all changes were rejected.
+         *     - `simpleMarkup` — Render with changes accepted and comments as annotations.
+         *     - `allMarkup` — Render with all markups visible, including redlines and comments.
+         * @default noMarkup
+         * @enum {string}
+         */
+        markup_mode: "noMarkup" | "original" | "simpleMarkup" | "allMarkup";
+        /**
+         * @description BCP 47 language tag used for email (EML and MSG) conversion.
+         *     Controls email date/time formatting and header label translations.
+         *     When omitted for email conversion, Document Engine uses `en-US`.
+         * @example de-DE
+         */
+        email_language: string;
+        /**
+         * @description IANA timezone name used for email (EML and MSG) conversion.
+         *     Controls the timezone used when rendering email timestamps.
+         *     Document Engine validates the value against the system timezone database.
+         *     When omitted for email conversion, Document Engine uses `UTC`.
+         * @example Europe/Prague
+         */
+        email_timezone: string;
+        /** @description List of asset names imported in the HTML. References the name passed in the multipart request. */
+        assets: string[];
+        /** @description Text used for watermarking */
+        text: string;
+        /**
+         * @description The font to render the text. Fonts are client specific, so you should only use fonts you know are present in the browser where they should be displayed. If a font isn't found, PSPDFKit will automatically fall back to a sans-serif font.
+         * @example Helvetica
+         */
+        fontFamily: string;
+        /**
+         * @description Size of the text in points.
+         * @example 10
+         */
+        fontSize: number;
+        /**
+         * @description A foreground color of the text.
+         * @example #ffffff
+         */
+        fontColor: string;
+        /** @description Text style. Can be only italic, only bold, italic and bold, or none of these. */
+        fontStyle: ("bold" | "italic")[];
+        /**
+         * @description Rotation of the watermark in counterclockwise degrees.
+         * @default 0
+         */
+        rotation: number;
+        /** @description Watermark opacity. 0 is fully transparent, 1 is fully opaque. */
+        opacity: number;
+        /**
+         * @description A built-in template identifier. When specified, the template's CSS and layout
+         *     are used as the base styling. Use the `css` parameter to override specific styles
+         *     on top of the template and `layout` to override default page layout. When omitted, `built-in:default` is used.
+         *
+         *     **Report templates** — optimized for multi-page documents, articles, and documentation:
+         *
+         *     | Template | Page | Description |
+         *     |----------|------|-------------|
+         *     | `built-in:default` | A4 | GitHub-flavored Markdown style. Arimo font, 14px body, heading underlines, light gray table headers. Used when no template is specified. |
+         *     | `built-in:minimal` | A4, narrow margins | Clean and lightweight. Carlito 10pt, no heading borders, minimal decoration. Maximizes content area. |
+         *     | `built-in:corporate` | US Letter, 1in margins | Professional business style. Carlito 11pt, navy headings and table headers. Suitable for formal business documents. |
+         *     | `built-in:elegant` | A4 | Dense report style with blue accent on H5/H6 headings. Carlito 10pt body, dark table headers. Optimized for data-heavy reports. |
+         *     | `built-in:executive` | A4, 1in margins | Premium and polished. Carlito 10pt with generous whitespace, large 32pt title. Designed for presentation-quality reports. |
+         *     | `built-in:nordic` | A4 | Scandinavian design with serif headings (Caladea) and sans-serif body (Carlito 11pt). Blue accent on H3–H6. |
+         *     | `built-in:nordic-report` | A4 | Dense Nordic style for data-heavy reports. Carlito 10pt, dark navy table headers, alternating row colors. |
+         *     | `built-in:technical` | A4, tight margins | Information-dense technical documentation. Carlito 10pt with tight line-height, prominent code blocks. Maximizes content per page. |
+         *
+         *     **Presentation templates** — larger text and more whitespace for executive briefings:
+         *
+         *     | Template | Page | Description |
+         *     |----------|------|-------------|
+         *     | `built-in:elegant-presentation` | A4 | Elegant scaled up for presentations. Carlito 12pt body, 36pt title, 28pt H1. Blue accent on H5/H6. |
+         *     | `built-in:nordic-executive` | A4 | Premium with massive 48pt title, 36pt H1 with blue border-bottom. Inverted code blocks (dark background). |
+         *     | `built-in:nordic-presentation` | A4 | Nordic style scaled 1.3× for projection. 36pt title, 28pt H1, dark navy table headers. |
+         * @default built-in:default
+         * @example built-in:elegant
+         * @enum {string}
+         */
+        BuiltInTemplate: "built-in:default" | "built-in:minimal" | "built-in:corporate" | "built-in:elegant" | "built-in:executive" | "built-in:nordic" | "built-in:nordic-report" | "built-in:technical" | "built-in:elegant-presentation" | "built-in:nordic-executive" | "built-in:nordic-presentation";
+        /** @description Configuration for syntax highlighting of fenced code blocks. */
+        SyntaxHighlightConfig: {
+            /**
+             * @description Color theme name. Available themes:
+             *
+             *     **Dark:** `onedark` (default), `dracula`, `monokai`, `nord`, `github-dark`, `github-dark-dimmed`,
+             *     `gruvbox-dark`, `catppuccin-mocha`, `base16-ocean-dark`, `ayu-dark`, `ayu-mirage`, `solarized-dark`,
+             *     `visual-studio-dark`, `material-dark`, `night-owl`, `synthwave-84`, `coldark-dark`, `tokyonight-storm`,
+             *     `tokyonight-night`, `kanagawa-wave`, `kanagawa-dragon`, `rose-pine`, `rose-pine-moon`, `nightfox`,
+             *     `nordfox`, `carbonfox`, `terafox`, `duskfox`, `everforest-dark`, `oxocarbon-dark`, `tomorrow-night`,
+             *     `zenburn`.
+             *
+             *     **Light:** `github`, `github-light`, `inspired-github`, `catppuccin-latte`, `gruvbox-light`,
+             *     `solarized-light`, `ayu-light`, `material-light`, `one-light`, `coldark-cold`, `tokyonight-day`,
+             *     `kanagawa-lotus`, `rose-pine-dawn`, `dawnfox`, `dayfox`, `everforest-light`, `oxocarbon-light`,
+             *     `emacs`, `base16-ocean-light`.
+             * @default onedark
+             * @example onedark
+             */
+            theme?: string;
+        };
+        /**
+         * @description Options controlling Markdown parsing, rendering, and syntax highlighting. All sub-objects
+         *     are optional — when omitted, defaults are applied. See individual sections for defaults.
+         */
+        MarkdownOptions: {
+            /**
+             * @description Syntax highlighting configuration for fenced code blocks. Set to `false` to disable
+             *     highlighting entirely, or provide a configuration object. When omitted, highlighting
+             *     is enabled with the `onedark` theme.
+             */
+            syntax_highlight?: components["schemas"]["SyntaxHighlightConfig"] | false;
+        };
+        /**
          * CreateDigitalSignature
          * @example {
-         *       "signatureType": "cades",
          *       "flatten": false,
          *       "appearance": {
          *         "mode": "signatureOnly",
          *         "contentType": "image/png",
          *         "showWatermark": true,
          *         "showSignDate": true
-         *       },
-         *       "position": {
-         *         "pageIndex": 0
-         *       },
-         *       "cadesLevel": "b-lt"
+         *       }
          *     }
          */
         CreateDigitalSignature: {
-            /**
-             * @description The signature type to create.
-             *     Note: While this field is required if sending signature parameters,
-             *     the entire `data` object itself is optional in the multipart request.
-             *
-             * @default cms
-             * @enum {string}
-             */
-            signatureType: "cms" | "cades";
             /**
              * @description Controls whether to flatten the document before signing it.
              *     This is useful when you want the document's appearance to remain stable before signing and to ensure there's no indication that the document can be edited after signing.
              *
              *     Note that the resulting document's records (annotations and form fields) will be deleted.
-             *
              * @default false
              */
-            flatten: boolean;
+            flatten?: boolean;
             /**
              * @description Name of the signature form field to sign. Use this when signing an existing signature form field.
              *     If a signature field with this name does not exist in the document, it will be created at the position specified with `position`.
@@ -1438,26 +1900,22 @@ export interface components {
              *     If a signature field with the specified name exists and `position` is also set, the request will result in an error.
              *
              *     Note: Either `formFieldName` or `position` must be provided if creating a visible signature.
-             *
              * @example signatureI-field
              */
             formFieldName?: string;
-            /** @description The appearance settings for the visible signature. Omit if you want an invisible signature to be created.
-             *      */
+            /** @description The appearance settings for the visible signature. Omit if you want an invisible signature to be created. */
             appearance?: {
                 /**
                  * @description Specifies what will be rendered in the signature appearance: graphics, description, or both.
                  *     Visit the [Configure Digital Signature Appearance guide](https://www.nutrient.io/guides/web/signatures/digital-signatures/signature-lifecycle/configure-digital-signature-appearance/) for a detailed description of the signature modes.
-                 *
                  * @default signatureAndDescription
                  * @example signatureOnly
                  * @enum {string}
                  */
-                mode: "signatureOnly" | "signatureAndDescription" | "descriptionOnly";
+                mode?: "signatureOnly" | "signatureAndDescription" | "descriptionOnly";
                 /**
                  * @description The content type of the watermark image when provided in the `image` parameter of the multipart request.
                  *     Supported types are `application/pdf`, `image/png`, and `image/jpeg`.
-                 *
                  * @example image/png
                  */
                 contentType?: string;
@@ -1465,31 +1923,26 @@ export interface components {
                  * @description Controls whether to include the watermark in the signature appearance.
                  *     When `true` and a watermark image is provided via the `watermark` parameter, it will be included.
                  *     When `true` and no watermark image is provided, the Nutrient logo will be used as the default watermark.
-                 *
                  * @default true
                  */
-                showWatermark: boolean;
+                showWatermark?: boolean;
                 /**
                  * @description Controls whether to show the signing date and time in the signature appearance.
                  *     When `true`, the date and time will be shown in ISO 8601 format.
                  *     Example: 2023-06-15 13:57:31
-                 *
                  * @default true
                  */
-                showSignDate: boolean;
+                showSignDate?: boolean;
                 /**
                  * @description Controls whether to include the timezone in the signing date.
                  *     Only applies when `showSignDate` is `true`.
-                 *
                  * @default false
                  */
-                showDateTimezone: boolean;
+                showDateTimezone?: boolean;
             };
-            /** @description Position of the visible signature form field. Omit if you want an invisible signature or if you specified the `formFieldName` option.
-             *      */
+            /** @description Position of the visible signature form field. Omit if you want an invisible signature or if you specified the `formFieldName` option. */
             position?: {
-                /** @description The index of the page where the signature appearance will be rendered.
-                 *      */
+                /** @description The index of the page where the signature appearance will be rendered. */
                 pageIndex: number;
                 /**
                  * @description An array of 4 numbers (points) representing the bounding box where the signature appearance will be rendered on the specified `pageIndex`.
@@ -1499,32 +1952,9 @@ export interface components {
                  *     The unit is PDF points (1 PDF point equals 1⁄72 of an inch).
                  *     The first two numbers describe the [left,top] coordinates of the top left corner of the bounding box,
                  *     while the second two numbers describe the width and height of the bounding box.
-                 *
-                 * @example [
-                 *       0,
-                 *       0,
-                 *       100,
-                 *       100
-                 *     ]
                  */
                 rect: number[];
             };
-            /**
-             * @description The CAdES level to use when creating the signature. The default value is `CAdES B-LT`.
-             *     This parameter is ignored when the `signatureType` is `cms`.
-             *
-             *     This is more like a hint of what level to use, and you should be aware that the API can return `b-b` even when you ask for `b-lt`. This can happen when the timestamp authority server is down, etc.
-             *
-             *     If this API is invoked with the [Document Engine](https://www.nutrient.io/sdk/document-engine), you can override the default with the following environment variable: [`DIGITAL_SIGNATURE_CADES_LEVEL`](https://www.nutrient.io/guides/document-engine/configuration/options/).
-             *
-             *     For Long-Term Validation (LTV) of the signature - when this API is invoked with the [Document Engine](https://www.nutrient.io/sdk/document-engine) - you need to ensure that the signing certificate chain links to a trusted anchor Certificate Authority (CA) at the time of signing.
-             *
-             *     To add the root CA and necessary intermediate CAs to your Document Engine instance, follow the instructions in [our guide on Providing Trusted Root Certificates](https://www.nutrient.io/guides/document-engine/signatures/signature-lifecycle/validation/#providing-trusted-root-certificates).
-             *
-             * @default b-lt
-             * @enum {string}
-             */
-            cadesLevel: "b-lt" | "b-t" | "b-b";
         };
         /**
          * BlendMode
@@ -1534,7 +1964,6 @@ export interface components {
         /**
          * isCommentThreadRoot
          * @description Indicates whether the annotation is the root of a comment thread.
-         *
          */
         IsCommentThreadRoot: boolean;
         /** MarkupAnnotation */
@@ -1563,13 +1992,11 @@ export interface components {
              *     Hyperlinks are also supported in the `a` tags using the `href` attribute.
              *     Styles are supported by using inline styles with the `style` attribute.
              *     Supported CSS properties include `background-color`, `font-weight`, `font-style`, `text-decoration`, `color`
-             *
              * @enum {string}
              */
             format?: "xhtml" | "plain";
             /**
              * @description Actual text content of the annotation. This is the text that will be displayed in the annotation.
-             *
              * @example Annotation with <b>xhtml</b> contents.
              */
             value?: string;
@@ -1605,7 +2032,6 @@ export interface components {
          * @description Alignment of the text along the vertical axis.
          *
          *     Note that vertical align is a custom PSPDFKit extension that might not be honored by 3rd party readers.
-         *
          * @enum {string}
          */
         VerticalAlign: "top" | "center" | "bottom";
@@ -1831,7 +2257,7 @@ export interface components {
              * @enum {string}
              */
             contentType?: "image/jpeg" | "image/png" | "application/pdf";
-            /** @description Either the SHA256 Hash of the attachment or the pdfObjectId of the attachment. */
+            /** @description Either the SHA256 hash of the attachment or the pdfObjectId of the attachment. */
             imageAttachmentId?: string;
             rotation?: components["schemas"]["AnnotationRotation"];
             /** @description True if the annotation should be considered a (soft) signature. */
@@ -1890,6 +2316,13 @@ export interface components {
             verticalAlign?: components["schemas"]["VerticalAlign"];
             rotation?: components["schemas"]["AnnotationRotation"];
             backgroundColor?: components["schemas"]["BackgroundColor"];
+            /**
+             * @description MIME type of the widget attachment.
+             * @enum {string}
+             */
+            contentType?: "image/jpeg" | "image/png" | "application/pdf";
+            /** @description SHA256 hash of the widget attachment. */
+            widgetAttachmentId?: string;
         };
         /** CommentMarkerAnnotation */
         CommentMarkerAnnotation: components["schemas"]["BaseAnnotation"] & {
@@ -1905,7 +2338,6 @@ export interface components {
         /**
          * Annotation JSON v2
          * @description JSON representation of an annotation.
-         *
          */
         Annotation: components["schemas"]["MarkupAnnotation"] | components["schemas"]["RedactionAnnotation"] | components["schemas"]["TextAnnotation"] | components["schemas"]["InkAnnotation"] | components["schemas"]["LinkAnnotation"] | components["schemas"]["NoteAnnotation"] | components["schemas"]["EllipseAnnotation"] | components["schemas"]["RectangleAnnotation"] | components["schemas"]["LineAnnotation"] | components["schemas"]["PolylineAnnotation"] | components["schemas"]["PolygonAnnotation"] | components["schemas"]["ImageAnnotation"] | components["schemas"]["StampAnnotation"] | components["schemas"]["WidgetAnnotation"] | components["schemas"]["CommentMarkerAnnotation"];
         /** BaseAnnotation */
@@ -1930,7 +2362,8 @@ export interface components {
              * @example 01DNEDPQQ22W49KDXRFPG4EPEQ
              */
             id?: string;
-            /** @description Array of annotation flags.
+            /**
+             * @description Array of annotation flags.
              *
              *     | Flag | Description |
              *     | ---- | ----------- |
@@ -1943,7 +2376,7 @@ export interface components {
              *     | readOnly | Don't allow the annotation to be deleted or its properties modified. |
              *     | locked | Same as `readOnly` but allows changing annotation contents. |
              *     | lockedContents | Don't allow the contents of the annotation to be modified. |
-             *      */
+             */
             flags?: ("noPrint" | "noZoom" | "noRotate" | "noView" | "hidden" | "invisible" | "readOnly" | "locked" | "toggleNoView" | "lockedContents")[];
             /**
              * Format: date-time
@@ -2161,7 +2594,7 @@ export interface components {
              * @enum {string}
              */
             contentType?: "image/jpeg" | "image/png" | "application/pdf";
-            /** @description Either the SHA256 Hash of the attachment or the pdfObjectId of the attachment. */
+            /** @description Either the SHA256 hash of the attachment or the pdfObjectId of the attachment. */
             imageAttachmentId?: string;
             rotation?: components["schemas"]["AnnotationRotation"];
             /** @description True if the annotation should be considered a (soft) signature. */
@@ -2212,11 +2645,17 @@ export interface components {
             verticalAlign?: components["schemas"]["VerticalAlign"];
             rotation?: components["schemas"]["AnnotationRotation"];
             backgroundColor?: components["schemas"]["BackgroundColor"];
+            /**
+             * @description MIME type of the widget attachment.
+             * @enum {string}
+             */
+            contentType?: "image/jpeg" | "image/png" | "application/pdf";
+            /** @description SHA256 hash of the widget attachment. */
+            widgetAttachmentId?: string;
         };
         /**
          * Annotation JSON v1
          * @description JSON representation of an annotation.
-         *
          */
         "Annotation.v1": components["schemas"]["MarkupAnnotation.v1"] | components["schemas"]["RedactionAnnotation.v1"] | components["schemas"]["TextAnnotation.v1"] | components["schemas"]["InkAnnotation.v1"] | components["schemas"]["LinkAnnotation.v1"] | components["schemas"]["NoteAnnotation.v1"] | components["schemas"]["EllipseAnnotation.v1"] | components["schemas"]["RectangleAnnotation.v1"] | components["schemas"]["LineAnnotation.v1"] | components["schemas"]["PolylineAnnotation.v1"] | components["schemas"]["PolygonAnnotation.v1"] | components["schemas"]["ImageAnnotation.v1"] | components["schemas"]["StampAnnotation.v1"] | components["schemas"]["WidgetAnnotation.v1"];
         /**
@@ -2224,14 +2663,11 @@ export interface components {
          * @description Represents a binary "attachment" associated with an Annotation.
          *
          *     For example, this might be an image attachment for `ImageAnnotation`.
-         *
          */
         Attachment: {
-            /** @description Base64-encoded binary data of the attachment.
-             *      */
+            /** @description Base64-encoded binary data of the attachment. */
             binary?: string;
-            /** @description MIME type of the attachment's content. For example, `image/png`.
-             *      */
+            /** @description MIME type of the attachment's content. For example, `image/png`. */
             contentType?: string;
         };
         /**
@@ -2241,7 +2677,6 @@ export interface components {
          *     of the attachment (in case it's part of the source PDF).
          *     * Values are the actual `Attachment` objects with Base-64 encoded binary
          *     contents of the attachment and its content type.
-         *
          * @example {
          *       "388dd55f16b0b7ccdf7abdc7a0daea7872ef521de56ee820b4440e52c87d081b": {
          *         "binary": "YXR0YWNobWVudCBjb250ZW50cwo=",
@@ -2272,13 +2707,11 @@ export interface components {
             id?: string;
             /**
              * @description A unique identifier for the form field. This is not visible in the PDF.
-             *
              * @example Form-Field
              */
             name: string;
             /**
              * @description The visible name of the form field. It is used to identify the field in the UI for accessibility.
-             *
              * @example Form Field
              */
             label: string;
@@ -2288,7 +2721,6 @@ export interface components {
              *     The widget annotation is used to define the visual appearance of the form field and
              *     to manage user interaction with the form field. Each interactive form control is
              *     associated with separate widget annotation.
-             *
              * @example [
              *       "01DNEDPQQ22W49KDXRFPG4EPEQ",
              *       "7KPS6T4DKYN71VB7G5KBGB5R51"
@@ -2305,7 +2737,6 @@ export interface components {
              *     | readOnly | Field can't be filled. |
              *     | required | Field needs to have a value when exported by a submit-form action |
              *     | _noExport_ | _(Not supported) Field shall not be exported by a submit-form action. PSPDFKit will read this flag from the PDF and write back changes to its state, but otherwise this flag has no effect._ |
-             *
              * @example [
              *       "required"
              *     ]
@@ -2315,7 +2746,6 @@ export interface components {
         /**
          * ButtonFormField
          * @description A simple push button that responds immediately to user input without retaining any state.
-         *
          */
         ButtonFormField: components["schemas"]["BaseFormField"] & {
             /** @enum {string} */
@@ -2323,8 +2753,7 @@ export interface components {
             /** @description Specifies the 'normal' caption of the button */
             buttonLabel: string;
         };
-        /** @description A form option identifies a possible option for the form field.
-         *      */
+        /** @description A form option identifies a possible option for the form field. */
         FormFieldOption: {
             /**
              * @description The label of the option.
@@ -2336,13 +2765,23 @@ export interface components {
              * @example Two
              */
             value: string;
+            /**
+             * @description The ID of the widget annotation this option is mapped to.
+             *     Required for `CheckBoxFormField` and `RadioButtonFormField` options.
+             *     Must reference one of the IDs in the form field's `annotationIds` array.
+             */
+            annotationId?: string;
         };
         /**
          * @description The list of form field options.
          *
-         *     The index of the widget annotation ID in the `annotationIds`
-         *     property corresponds to an index in the  form field option array.
+         *     For `CheckBoxFormField` and `RadioButtonFormField`, each option must include
+         *     an `annotationId` that maps it to a specific widget annotation. The number of
+         *     options must equal the number of entries in `annotationIds`.
          *
+         *     For other form field types (`ListBoxFormField`, `ComboBoxFormField`), the index
+         *     of the widget annotation ID in the `annotationIds` property corresponds to an
+         *     index in the form field option array.
          * @example [
          *       {
          *         "label": "MALE",
@@ -2355,44 +2794,38 @@ export interface components {
          *     ]
          */
         FormFieldOptions: components["schemas"]["FormFieldOption"][];
-        /** @description Default values corresponding to each option.
-         *      */
+        /** @description Default values corresponding to each option. */
         FormFieldDefaultValues: string[];
-        /** @description Additional actions that can be performed on the form field.
-         *      */
+        /** @description Additional actions that can be performed on the form field. */
         FormFieldAdditionalActionsEvent: {
-            onChange?: Record<string, never> & components["schemas"]["Action"];
-            onCalculate?: Record<string, never> & components["schemas"]["Action"];
+            onChange?: Record<string, unknown> & components["schemas"]["Action"];
+            onCalculate?: Record<string, unknown> & components["schemas"]["Action"];
         };
         ChoiceFormField: {
             options: components["schemas"]["FormFieldOptions"];
             /**
              * @description If true, more than one of the field's option items may be selected
              *     simultaneously.
-             *
              * @default false
              */
-            multiSelect: boolean;
+            multiSelect?: boolean;
             /**
              * @description If true, the new value is committed as soon as a selection is made, without
              *     requiring the user to blur the field.
-             *
              * @default false
              */
-            commitOnChange: boolean;
+            commitOnChange?: boolean;
             defaultValues?: components["schemas"]["FormFieldDefaultValues"];
             additionalActions?: components["schemas"]["FormFieldAdditionalActionsEvent"];
         };
-        /** @description Additional actions that can be performed on the form field.
-         *      */
+        /** @description Additional actions that can be performed on the form field. */
         FormFieldAdditionalActionsInput: {
-            onInput?: Record<string, never> & components["schemas"]["Action"];
-            onFormat?: Record<string, never> & components["schemas"]["Action"];
+            onInput?: Record<string, unknown> & components["schemas"]["Action"];
+            onFormat?: Record<string, unknown> & components["schemas"]["Action"];
         };
         /**
          * ListBoxFormField
          * @description A list box where multiple values can be selected.
-         *
          */
         ListBoxFormField: components["schemas"]["BaseFormField"] & components["schemas"]["ChoiceFormField"] & {
             /** @enum {string} */
@@ -2402,28 +2835,27 @@ export interface components {
         /**
          * ComboBoxFormField
          * @description A combo box is a drop-down box with the option add custom entries (see `edit`).
-         *
          */
         ComboBoxFormField: components["schemas"]["BaseFormField"] & components["schemas"]["ChoiceFormField"] & {
             /** @enum {string} */
             type?: "pspdfkit/form-field/combobox";
             /**
              * @description If true, the combo box includes an editable text box as well as a dropdown list. If false, it includes only a drop-down list.
-             *
              * @default false
              */
             edit: boolean;
             /**
              * @description If true, the text entered in the field is not spell-checked.
-             *
              * @default false
              */
             doNotSpellCheck: boolean;
         };
         /**
          * CheckBoxFormField
-         * @description A check box that can either be checked or unchecked. One check box form field can also be associated to multiple single check box widgets
+         * @description A check box that can either be checked or unchecked. One check box form field can also be associated to multiple single check box widgets.
          *
+         *     When creating a checkbox form field with multiple widgets, each entry in `options` must include
+         *     an `annotationId` property that maps the option to its corresponding widget annotation.
          */
         CheckboxFormField: components["schemas"]["BaseFormField"] & {
             /** @enum {string} */
@@ -2432,13 +2864,14 @@ export interface components {
             defaultValues: components["schemas"]["FormFieldDefaultValues"];
             additionalActions?: components["schemas"]["FormFieldAdditionalActionsEvent"];
         };
-        /** @description Default value of the form field.
-         *      */
+        /** @description Default value of the form field. */
         FormFieldDefaultValue: string;
         /**
          * RadioButtonFormField
          * @description A group of radio buttons. Similar to `CheckBoxFormField`, but there can only be one value set at the same time.
          *
+         *     When creating a radio button form field, each entry in `options` must include
+         *     an `annotationId` property that maps the option to its corresponding widget annotation.
          */
         RadioButtonFormField: components["schemas"]["BaseFormField"] & {
             /** @enum {string} */
@@ -2449,24 +2882,21 @@ export interface components {
              * @description If true, exactly one radio button must be selected at all times.
              *     Clicking the currently selected button has no effect. Otherwise,
              *     clicking the selected button deselects it, leaving no button selected.
-             *
              * @default false
              */
-            noToggleToOff: boolean;
+            noToggleToOff?: boolean;
             /**
              * @description If true, a group of radio buttons within a radio button field that use
              *     the same value for the on state will turn on and off in unions: If one is
              *     checked, they are all checked (the same behavior as HTML radio buttons).
              *     Otherwise, only the checked radio button will be marked checked.
-             *
              * @default false
              */
-            radiosInUnison: boolean;
+            radiosInUnison?: boolean;
         };
         /**
          * TextFormField
          * @description A text input element, that can either span a single or multiple lines.
-         *
          */
         TextFormField: components["schemas"]["BaseFormField"] & {
             /** @enum {string} */
@@ -2475,16 +2905,13 @@ export interface components {
              * @description If true, the field is intended for entering a secure password that should not be echoed visibly
              *      to the screen. Characters typed from the keyboard should instead be echoed in some unreadable
              *      form, such as asterisks or bullet characters.
-             *
              * @default false
              */
-            password: boolean;
-            /** @description The maximum length of the field's text, in characters. If none is set, the size is not limited.
-             *      */
+            password?: boolean;
+            /** @description The maximum length of the field's text, in characters. If none is set, the size is not limited. */
             maxLength?: number;
             /**
              * @description If true, the text entered in the field is not spell-checked.
-             *
              * @default false
              */
             doNotSpellCheck: boolean;
@@ -2492,50 +2919,51 @@ export interface components {
              * @description If true, the field does not scroll (horizontally for single-line fields, vertically for multiple-line fields)
              *     to accommodate more text than fits within its widget annotation's rectangle. Once the field is full, no further
              *     text is accepted.
-             *
              * @default false
              */
             doNotScroll: boolean;
             /**
              * @description If true, the field can contain multiple lines of text. Otherwise, the field's text is restricted to a single line.
-             *
              * @default false
              */
             multiLine: boolean;
             /**
              * @description If true, every character will have an input element on their own which is evenly distributed inside
              *     the bounding box of the widget annotation. When this is set, the form field must have a `maxLength``.
-             *
              * @default false
              */
             comb: boolean;
             defaultValue: components["schemas"]["FormFieldDefaultValue"];
             /**
              * @description _(Not Supported) Rich text rendering is not supported right now. Any rich text value will be displayed as plain text in case the regular text value is missing._
-             *
              * @default false
              */
-            richText: boolean;
-            /** @description _(Not Supported) Rich text rendering is not supported right now. Any rich text value will be displayed as plain text in case the regular text value is missing._
-             *      */
+            richText?: boolean;
+            /** @description _(Not Supported) Rich text rendering is not supported right now. Any rich text value will be displayed as plain text in case the regular text value is missing._ */
             richTextValue?: string;
             additionalActions?: components["schemas"]["FormFieldAdditionalActionsEvent"] & components["schemas"]["FormFieldAdditionalActionsInput"];
         };
         /**
          * SignatureFormField
          * @description A field that contains a digital signature.
-         *
          */
         SignatureFormField: components["schemas"]["BaseFormField"] & {
             /** @enum {string} */
             type?: "pspdfkit/form-field/signature";
         };
         /**
+         * UnknownFormField
+         * @description A form field of unknown or unsupported type. Contains only the basic form field properties without any type-specific data.
+         */
+        UnknownFormField: components["schemas"]["BaseFormField"] & {
+            /** @enum {string} */
+            type?: "pspdfkit/form-field/unknown";
+        };
+        /**
          * Form field JSON
          * @description JSON representation of a form field
-         *
          */
-        FormField: components["schemas"]["ButtonFormField"] | components["schemas"]["ListBoxFormField"] | components["schemas"]["ComboBoxFormField"] | components["schemas"]["CheckboxFormField"] | components["schemas"]["RadioButtonFormField"] | components["schemas"]["TextFormField"] | components["schemas"]["SignatureFormField"];
+        FormField: components["schemas"]["ButtonFormField"] | components["schemas"]["ListBoxFormField"] | components["schemas"]["ComboBoxFormField"] | components["schemas"]["CheckboxFormField"] | components["schemas"]["RadioButtonFormField"] | components["schemas"]["TextFormField"] | components["schemas"]["SignatureFormField"] | components["schemas"]["UnknownFormField"];
         /**
          * FormFieldValue
          * @description A record representing a form field value.
@@ -2557,11 +2985,9 @@ export interface components {
          *     that represents an appearance stream named "Checked", representing the ON state.
          *
          *     The same applies to the OFF state, which by design always has the name "Off", as explained previously.
-         *
          */
         FormFieldValue: {
-            /** @description Unique name of the form field. This property is used to link form field value to a `FormField`.
-             *      */
+            /** @description Unique name of the form field. This property is used to link form field value to a `FormField`. */
             name: string;
             value?: (string | null) | string[];
             /** @enum {string} */
@@ -2571,30 +2997,28 @@ export interface components {
              * @enum {integer}
              */
             v: 1;
-            /** @description Radio buttons and checkboxes can have multiple widgets with the same form value associated,
+            /**
+             * @description Radio buttons and checkboxes can have multiple widgets with the same form value associated,
              *     but can be selected independently. `optionIndexes`` contains the value indexes that should be actually set.
              *
              *     If set, the value field doesn't get used, and the widget found at the corresponding indexes in
              *     the form field's annotationIds property are checked.
              *
              *     If set on fields other than `RadioButtonFormField` or `CheckBoxFormField`, setting the form value will fail.
-             *      */
+             */
             optionIndexes?: number[];
             /**
              * @description Specifies if the given text should fit into the visible portion of the text form field.
-             *
              * @default false
              */
-            isFitting: boolean;
+            isFitting?: boolean;
         };
         /**
          * Bookmark
          * @description A record representing a bookmark.
-         *
          */
         Bookmark: {
-            /** @description The optional bookmark name. This is used to identify the bookmark.
-             *      */
+            /** @description The optional bookmark name. This is used to identify the bookmark. */
             name?: string;
             /** @enum {string} */
             type: "pspdfkit/bookmark";
@@ -2604,8 +3028,7 @@ export interface components {
              */
             v: 1;
             action: components["schemas"]["Action"];
-            /** @description The PDF object ID of the bookmark in the PDF.
-             *      */
+            /** @description The PDF object ID of the bookmark in the PDF. */
             pdfBookmarkId?: string;
         };
         /**
@@ -2628,21 +3051,18 @@ export interface components {
             pageIndex: components["schemas"]["PageIndex"];
             /**
              * @description The ID of the root annotation of the comment thread.
-             *
              * @example 01HBDGR9D5JTFERPSCEMNH5GPG
              */
             rootId: string;
             text: components["schemas"]["AnnotationText"];
             /**
              * @description The instant JSON specification version that the record is compliant to.
-             *
              * @enum {integer}
              */
             v: 2;
             createdAt?: components["schemas"]["IsoDateTime"];
             /**
              * @description The name of the user who created the comment.
-             *
              * @example John Doe
              */
             creatorName?: string;
@@ -2657,7 +3077,6 @@ export interface components {
             pageIndex: components["schemas"]["PageIndex"];
             /**
              * @description The ID of the root annotation of the comment thread.
-             *
              * @example 01HBDGR9D5JTFERPSCEMNH5GPG
              */
             rootId: string;
@@ -2668,14 +3087,12 @@ export interface components {
             text: string;
             /**
              * @description The instant JSON specification version that the record is compliant to.
-             *
              * @enum {integer}
              */
             v: 1;
             createdAt?: components["schemas"]["IsoDateTime"];
             /**
              * @description The name of the user who created the comment.
-             *
              * @example John Doe
              */
             creatorName?: string;
@@ -2686,17 +3103,17 @@ export interface components {
         /**
          * Comments JSON
          * @description JSON representation of a comment.
-         *
          */
         CommentContent: components["schemas"]["InstantComment.v2"] | components["schemas"]["InstantComment.v1"];
     };
     responses: {
-        /** @description The processing result. One of the following:
+        /**
+         * @description The processing result. One of the following:
          *     * PDF file for `pdf` and `pdfa` output types.
          *     * Image file for `image` output types.
          *     * JSON with document contents for `json-content` output type.
          *     * Office file for `docx`, `xlsx`, and `pptx` output types.
-         *      */
+         */
         BuildResponseOk: {
             headers: {
                 "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
@@ -2705,7 +3122,7 @@ export interface components {
             };
             content: {
                 "application/pdf": string;
-                "application/json": components["schemas"]["JSONContentOutput"];
+                "application/json": components["schemas"]["BuildResponseJsonContents"];
                 "application/jpeg": string;
                 "application/png": string;
                 "application/webp": string;
@@ -2717,25 +3134,26 @@ export interface components {
         };
     };
     parameters: {
-        /** @description The PDF document password.
+        /**
+         * @description The PDF document password.
          *
-         *     The value can be either either a plain-text password or a base64 encoded password in a form `base64:<encoded-password>`.
+         *     The value can be either a plain-text password or a base64 encoded password in a form `base64:<encoded-password>`.
          *     Use the Base64 encoding if your password contains characters that are not allowed in HTTP header or would be otherwise mangled
          *     (e.g. trailing or leading spaces)
          *
          *     If the document is password protected, any operations performed on it require supplying a password.
-         *      */
+         */
         Password: string;
     };
     requestBodies: never;
     headers: {
-        /** @description Cost of the request in credits.
-         *      */
+        /** @description Cost of the request in credits. */
         "x-pspdfkit-request-cost": number;
-        /** @description Remaining credits after the request has been executed. Note that this
+        /**
+         * @description Remaining credits after the request has been executed. Note that this
          *     value is only informational, as it doesn't include pending credit
          *     deductions on your account.
-         *      */
+         */
         "x-pspdfkit-remaining-credits": number;
     };
     pathItems: never;
@@ -2759,8 +3177,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["BuildResponseOk"];
-            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met.
-             *      */
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2769,48 +3186,127 @@ export interface operations {
                     "application/json": components["schemas"]["HostedErrorResponse"];
                 };
             };
-            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid.
-             *      */
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description You have exceeded the total number of documents processed in your subscription.
-             *      */
+            /** @description You have exceeded the total number of documents processed in your subscription. */
             402: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request timed out.
-             *      */
+            /** @description The request timed out. */
             408: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large.
-             *      */
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
             413: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request exceeds the maximum output file size.
-             *      */
+            /** @description The request exceeds the maximum output file size. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description An internal server error occurred. Please contact support.
-             *      */
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "process-office-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The DOCX template to process.
+                     * @example <DOCX data>
+                     */
+                    document: string;
+                    model: components["schemas"]["OfficeTemplateModel"];
+                };
+            };
+        };
+        responses: {
+            /** @description The populated DOCX document. */
+            200: {
+                headers: {
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either the template or the model is too large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -2841,8 +3337,7 @@ export interface operations {
                     "application/json": components["schemas"]["AnalyzeBuildResponse"];
                 };
             };
-            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met.
-             *      */
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2851,24 +3346,871 @@ export interface operations {
                     "application/json": components["schemas"]["HostedErrorResponse"];
                 };
             };
-            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid.
-             *      */
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request timed out.
-             *      */
+            /** @description The request timed out. */
             408: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description An internal server error occurred. Please contact support.
-             *      */
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-convert-to-pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": string;
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                "image/jpeg": string;
+                "image/png": string;
+                /**
+                 * @example {
+                 *       "url": "https://www.nutrient.io/api/assets/downloads/samples/docx/document.docx"
+                 *     }
+                 */
+                "application/json": {
+                    url: components["schemas"]["url"];
+                    password?: components["schemas"]["password"];
+                    layout?: components["schemas"]["layout"];
+                    pages?: components["schemas"]["PageRange"];
+                    content_type?: components["schemas"]["content_type"];
+                    markup_mode?: components["schemas"]["markup_mode"];
+                    email_language?: components["schemas"]["email_language"];
+                    email_timezone?: components["schemas"]["email_timezone"];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The document file to convert to PDF
+                     * @example <Binary file data>
+                     */
+                    file: string;
+                    /** @example {} */
+                    data?: {
+                        password?: components["schemas"]["password"];
+                        layout?: components["schemas"]["layout"];
+                        pages?: components["schemas"]["PageRange"];
+                        content_type?: components["schemas"]["content_type"];
+                        markup_mode?: components["schemas"]["markup_mode"];
+                        email_language?: components["schemas"]["email_language"];
+                        email_timezone?: components["schemas"]["email_timezone"];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The processed PDF document */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-generate-pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                /**
+                 * @example {
+                 *       "url": "https://www.nutrient.io/api/assets/downloads/samples/html/index.html"
+                 *     }
+                 */
+                "application/json": {
+                    url: components["schemas"]["url"];
+                    assets?: components["schemas"]["assets"];
+                    layout?: components["schemas"]["PageLayout"];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The HTML file to convert to PDF
+                     * @example <html><body><h1>Hello World</h1></body></html>
+                     */
+                    html: string;
+                    /** @example {} */
+                    data?: {
+                        assets?: components["schemas"]["assets"];
+                        layout?: components["schemas"]["PageLayout"];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The processed PDF document */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-ocr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/pdf": string;
+                /**
+                 * @example {
+                 *       "url": "https://www.nutrient.io/api/assets/downloads/samples/scanned-document.pdf",
+                 *       "language": "english"
+                 *     }
+                 */
+                "application/json": {
+                    url: components["schemas"]["url"];
+                    /**
+                     * @description OCR dictionary to be used for text extraction. Defaults to `english` if not specified.
+                     *     You can specify either a single language or an array of languages for multilingual documents.
+                     * @default english
+                     */
+                    language?: components["schemas"]["OcrLanguage"] | components["schemas"]["OcrLanguage"][];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The PDF file to perform OCR on
+                     * @example <PDF file data>
+                     */
+                    file: string;
+                    /**
+                     * @example {
+                     *       "language": "english"
+                     *     }
+                     */
+                    data?: {
+                        /**
+                         * @description OCR dictionary to be used for text extraction. Defaults to `english` if not specified.
+                         *     You can specify either a single language or an array of languages for multilingual documents.
+                         * @default english
+                         */
+                        language?: components["schemas"]["OcrLanguage"] | components["schemas"]["OcrLanguage"][];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The PDF document with OCR text layer applied */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-pdfua": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/pdf": string;
+                /**
+                 * @example {
+                 *       "url": "https://www.nutrient.io/api/assets/downloads/samples/pdf/basic.pdf"
+                 *     }
+                 */
+                "application/json": {
+                    url: components["schemas"]["url"];
+                    password?: components["schemas"]["password"];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The PDF file to convert to PDF/UA
+                     * @example <Binary PDF data>
+                     */
+                    file: string;
+                    /** @example {} */
+                    data?: {
+                        password?: components["schemas"]["password"];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The PDF/UA-compliant document */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-redact-document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                /**
+                 * @example {
+                 *       "url": "https://www.nutrient.io/api/assets/downloads/samples/watermark/document.pdf",
+                 *       "strategy": "text",
+                 *       "strategyOptions": {
+                 *         "text": "primate"
+                 *       }
+                 *     }
+                 */
+                "application/json": {
+                    url: components["schemas"]["url"];
+                    /**
+                     * @description The redaction strategy to use. See the Build API's CreateRedactionsAction for details.
+                     * @enum {string}
+                     */
+                    strategy: "text" | "regex" | "preset" | "word_based";
+                    /** @description Options for the redaction strategy. Schema depends on the strategy chosen. */
+                    strategyOptions?: components["schemas"]["CreateRedactionsStrategyOptionsText"] | components["schemas"]["CreateRedactionsStrategyOptionsRegex"] | components["schemas"]["CreateRedactionsStrategyOptionsPreset"] | components["schemas"]["CreateRedactionsStrategyOptionsWordBased"];
+                    /**
+                     * @description Whether to stage redactions only or apply them immediately. When set to 'stage', creates redaction annotations. When set to 'apply', creates and applies redactions permanently.
+                     * @default apply
+                     * @enum {string}
+                     */
+                    redactionState?: "stage" | "apply";
+                    /** @description Optional array of redaction content items to apply. Each item defines a redaction area to create. */
+                    content?: Record<string, unknown>[];
+                    password?: components["schemas"]["password"];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The PDF file to redact
+                     * @example <Binary PDF data>
+                     */
+                    file: string;
+                    /**
+                     * @example {
+                     *       "strategy": "text",
+                     *       "strategyOptions": {
+                     *         "text": "primate"
+                     *       }
+                     *     }
+                     */
+                    data?: {
+                        /**
+                         * @description The redaction strategy to use. See the Build API's CreateRedactionsAction for details.
+                         * @enum {string}
+                         */
+                        strategy: "text" | "regex" | "preset" | "word_based";
+                        /** @description Options for the redaction strategy. Schema depends on the strategy chosen. */
+                        strategyOptions?: components["schemas"]["CreateRedactionsStrategyOptionsText"] | components["schemas"]["CreateRedactionsStrategyOptionsRegex"] | components["schemas"]["CreateRedactionsStrategyOptionsPreset"] | components["schemas"]["CreateRedactionsStrategyOptionsWordBased"];
+                        /**
+                         * @description Whether to stage redactions only or apply them immediately. When set to 'stage', creates redaction annotations. When set to 'apply', creates and applies redactions permanently.
+                         * @default apply
+                         * @enum {string}
+                         */
+                        redactionState?: "stage" | "apply";
+                        /** @description Optional array of redaction content items to apply. Each item defines a redaction area to create. */
+                        content?: Record<string, unknown>[];
+                        password?: components["schemas"]["password"];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The processed PDF document */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-watermark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": (({
+                    url: components["schemas"]["url"];
+                } & {
+                    text: components["schemas"]["text"];
+                    fontFamily?: components["schemas"]["fontFamily"];
+                    fontSize?: components["schemas"]["fontSize"];
+                    fontColor?: components["schemas"]["fontColor"];
+                    fontStyle?: components["schemas"]["fontStyle"];
+                }) | {
+                    url: components["schemas"]["url"];
+                    image: components["schemas"]["FileHandle"];
+                }) & {
+                    width: components["schemas"]["WatermarkDimension"] & unknown;
+                    height: components["schemas"]["WatermarkDimension"] & unknown;
+                    top?: components["schemas"]["WatermarkDimension"] & unknown;
+                    right?: components["schemas"]["WatermarkDimension"] & unknown;
+                    bottom?: components["schemas"]["WatermarkDimension"] & unknown;
+                    left?: components["schemas"]["WatermarkDimension"] & unknown;
+                    rotation?: components["schemas"]["rotation"];
+                    opacity?: components["schemas"]["opacity"];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The PDF file to watermark
+                     * @example <PDF data>
+                     */
+                    file: string;
+                    data: ({
+                        text: components["schemas"]["text"];
+                        fontFamily?: components["schemas"]["fontFamily"];
+                        fontSize?: components["schemas"]["fontSize"];
+                        fontColor?: components["schemas"]["fontColor"];
+                        fontStyle?: components["schemas"]["fontStyle"];
+                    } & {
+                        width: components["schemas"]["WatermarkDimension"] & unknown;
+                        height: components["schemas"]["WatermarkDimension"] & unknown;
+                        top?: components["schemas"]["WatermarkDimension"] & unknown;
+                        right?: components["schemas"]["WatermarkDimension"] & unknown;
+                        bottom?: components["schemas"]["WatermarkDimension"] & unknown;
+                        left?: components["schemas"]["WatermarkDimension"] & unknown;
+                        rotation?: components["schemas"]["rotation"];
+                        opacity?: components["schemas"]["opacity"];
+                    }) | ({
+                        /**
+                         * @description Name of the multipart part containing the watermark image
+                         * @example logo
+                         */
+                        image: string;
+                    } & {
+                        width: components["schemas"]["WatermarkDimension"] & unknown;
+                        height: components["schemas"]["WatermarkDimension"] & unknown;
+                        top?: components["schemas"]["WatermarkDimension"] & unknown;
+                        right?: components["schemas"]["WatermarkDimension"] & unknown;
+                        bottom?: components["schemas"]["WatermarkDimension"] & unknown;
+                        left?: components["schemas"]["WatermarkDimension"] & unknown;
+                        rotation?: components["schemas"]["rotation"];
+                        opacity?: components["schemas"]["opacity"];
+                    });
+                };
+            };
+        };
+        responses: {
+            /** @description The PDF document with watermark applied */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "processor-md-to-pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "text/markdown": string;
+                /**
+                 * @example {
+                 *       "markdown": "# Report\n\n| Metric | Value |\n|--------|------:|\n| Revenue | $1.2M |\n\nSee footnote[^1].\n\n[^1]: Q1 2026 figures.",
+                 *       "markdown_options": {
+                 *         "extensions": {
+                 *           "table": true,
+                 *           "footnotes": true
+                 *         },
+                 *         "syntax_highlight": {
+                 *           "theme": "github"
+                 *         }
+                 *       }
+                 *     }
+                 */
+                "application/json": {
+                    /**
+                     * @description The Markdown content to convert. Maximum size: 5 MB.
+                     * @example # Hello World
+                     *
+                     *     This is **bold** and *italic*.
+                     *
+                     *     | Name | Score |
+                     *     |------|------:|
+                     *     | Alice | 95 |
+                     */
+                    markdown: string;
+                    template?: components["schemas"]["BuiltInTemplate"];
+                    /**
+                     * @description Custom CSS appended after the template stylesheet. Use this to override or extend
+                     *     the template styling. When no template is specified, the CSS is appended after
+                     *     the default stylesheet.
+                     * @example body { font-family: Georgia, serif; } h1 { color: #2c3e50; }
+                     */
+                    css?: string;
+                    layout?: components["schemas"]["PageLayout"];
+                    markdown_options?: components["schemas"]["MarkdownOptions"];
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description The Markdown file to convert. Maximum size: 5 MB. Image references in the
+                     *     Markdown (e.g. `![logo](logo.png)`) are resolved against uploaded asset parts.
+                     * @example <Markdown file>
+                     */
+                    markdown: string;
+                    /** @description Optional JSON object with conversion options. All fields are optional. */
+                    data?: {
+                        template?: components["schemas"]["BuiltInTemplate"];
+                        /** @description Custom CSS appended after the template stylesheet. */
+                        css?: string;
+                        layout?: components["schemas"]["PageLayout"];
+                        markdown_options?: components["schemas"]["MarkdownOptions"];
+                    };
+                    /**
+                     * Format: binary
+                     * @description Optional inline HTML template file. When provided, this HTML wraps the rendered
+                     *     Markdown instead of the default template. The rendered Markdown body is inserted
+                     *     at the `{{content}}` placeholder. The `css` parameter is ignored when an inline
+                     *     HTML template is provided.
+                     * @example <HTML template file>
+                     */
+                    html?: string;
+                } & {
+                    [key: string]: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The generated PDF document */
+            200: {
+                headers: {
+                    "x-pspdfkit-remaining-credits": components["headers"]["x-pspdfkit-remaining-credits"];
+                    "x-pspdfkit-request-cost": components["headers"]["x-pspdfkit-request-cost"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /**
+             * @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met.
+             *
+             *     Common causes:
+             *     - Missing `markdown` field in JSON body or multipart request.
+             *     - Invalid `markdown_options` (unknown extension, invalid theme name, etc.).
+             *     - Invalid `layout` values (negative margins, unknown page size preset).
+             *     - Malformed JSON in the `data` multipart part.
+             */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostedErrorResponse"];
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description You have exceeded the total number of documents processed in your subscription. */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request timed out. */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /**
+             * @description The request exceeds the maximum allowed size. The Markdown content is limited to 5 MB.
+             *     The overall request body is subject to your plan's inbound size limit.
+             */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request exceeds the maximum output file size. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description An internal server error occurred. Please contact support. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -2881,14 +4223,15 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description The PDF document password.
+                /**
+                 * @description The PDF document password.
                  *
-                 *     The value can be either either a plain-text password or a base64 encoded password in a form `base64:<encoded-password>`.
+                 *     The value can be either a plain-text password or a base64 encoded password in a form `base64:<encoded-password>`.
                  *     Use the Base64 encoding if your password contains characters that are not allowed in HTTP header or would be otherwise mangled
                  *     (e.g. trailing or leading spaces)
                  *
                  *     If the document is password protected, any operations performed on it require supplying a password.
-                 *      */
+                 */
                 "pspdfkit-pdf-password"?: components["parameters"]["Password"];
             };
             path?: never;
@@ -2903,11 +4246,11 @@ export interface operations {
                      * @example <PDF data>
                      */
                     file: string;
-                    /** @description Optional signing parameters. If omitted, defaults will be used:
-                     *     - `signatureType`: `cms`
+                    /**
+                     * @description Optional signing parameters. If omitted, defaults will be used:
                      *     - `flatten`: `false`
                      *     - An invisible signature will be created
-                     *      */
+                     */
                     data?: components["schemas"]["CreateDigitalSignature"];
                     /**
                      * Format: binary
@@ -2936,8 +4279,7 @@ export interface operations {
                     "application/pdf": string;
                 };
             };
-            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met.
-             *      */
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2946,48 +4288,42 @@ export interface operations {
                     "application/json": components["schemas"]["HostedErrorResponse"];
                 };
             };
-            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid.
-             *      */
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description You have exceeded the total number of documents processed in your subscription.
-             *      */
+            /** @description You have exceeded the total number of documents processed in your subscription. */
             402: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request timed out.
-             *      */
+            /** @description The request timed out. */
             408: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large.
-             *      */
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
             413: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request exceeds the maximum output file size.
-             *      */
+            /** @description The request exceeds the maximum output file size. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description An internal server error occurred. Please contact support.
-             *      */
+            /** @description An internal server error occurred. Please contact support. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -3018,8 +4354,7 @@ export interface operations {
                     "application/json": components["schemas"]["CreateAuthTokenResponse"];
                 };
             };
-            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met.
-             *      */
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3092,11 +4427,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Information about your API keys. */
-                        apiKeys?: {
-                            /** @description Your live API key. */
-                            live?: string;
-                        };
                         /**
                          * @description Whether you are signed in.
                          * @example true
@@ -3123,13 +4453,71 @@ export interface operations {
                     };
                 };
             };
-            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid.
-             *      */
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    "get-account-product-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product slug matching `Hosted.Tenants.Model.Tenant.product/1`. */
+                product: "processor" | "viewer" | "signing_workflow" | "accessibility" | "data_extraction";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Product subscription and usage information. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        subscription?: {
+                            type?: ("free" | "trial" | "paid" | "enterprise") | null;
+                            status?: ("active" | "inactive" | "past_due" | "paused" | "deleted") | null;
+                        };
+                        usage?: {
+                            counters?: {
+                                /** @description Service-specific usage counter identifier. */
+                                code?: string;
+                                /** @description Unit of the counter (for example credits, pages, sessions, bytes). */
+                                unit?: string;
+                                /** @description Current usage amount for the counter. */
+                                used?: string | null;
+                                /** @description Total allowance for the counter in the current period. */
+                                total?: string | null;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The requested product is unknown or not enabled for the authenticated organization. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        error?: "unknown_product" | "product_not_found";
+                    };
+                };
             };
         };
     };
@@ -3143,8 +4531,7 @@ export interface operations {
         requestBody?: {
             content: {
                 "multipart/form-data": {
-                    /** @description Parameters required for the redaction.
-                     *      */
+                    /** @description Parameters required for the redaction. */
                     data: components["schemas"]["RedactData"];
                     /**
                      * Format: binary
@@ -3168,8 +4555,7 @@ export interface operations {
                     "application/pdf": string;
                 };
             };
-            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met.
-             *      */
+            /** @description The request is malformed. Some invalid data was supplied, or a precondition wasn't met. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3178,52 +4564,46 @@ export interface operations {
                     "application/json": {
                         /** @example 400 */
                         status?: number;
-                        errors?: Record<string, never>[];
+                        errors?: Record<string, unknown>[];
                     };
                 };
             };
-            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid.
-             *      */
+            /** @description You are unauthorized. Sent when no API token is specified, or when the API token you specified isn't valid. */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description You have exceeded the total number of documents processed in your subscription.
-             *      */
+            /** @description You have exceeded the total number of documents processed in your subscription. */
             402: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request timed out.
-             *      */
+            /** @description The request timed out. */
             408: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large.
-             *      */
+            /** @description The request exceeds the maximum input size, meaning either a single part, or the sum of all parts, is large. */
             413: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The request exceeds the maximum output file size.
-             *      */
+            /** @description The request exceeds the maximum output file size. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description An internal server error occurred. Please contact support.
-             *      */
+            /** @description An internal server error occurred. Please contact support. */
             500: {
                 headers: {
                     [name: string]: unknown;

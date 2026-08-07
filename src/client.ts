@@ -11,10 +11,14 @@ import type {
   ParseInstructions,
   ParseOptions,
   ParseResponse,
+  AccountInfo,
+  AccountUsage,
+  AccountUsageEndpoint,
+  ProductName,
 } from './types';
 import { ValidationError, NutrientError } from './errors';
 import { workflow } from './workflow';
-import type { components, operations } from './generated/api-types';
+import type { components } from './generated/api-types';
 import type { components as extractComponents } from './generated/extract-types';
 import { BuildActions } from './build';
 import { processFileInput, isRemoteFileInput, getRemoteUrl } from './inputs';
@@ -141,6 +145,9 @@ export class NutrientClient {
   /**
    * Gets account information for the current API key
    *
+   * @deprecated The underlying `/account/info` endpoint is deprecated upstream.
+   * Use {@link getUsage} with the relevant product name instead.
+   *
    * @returns Promise resolving to account information
    *
    * @example
@@ -149,13 +156,58 @@ export class NutrientClient {
    * console.log(accountInfo.subscriptionType);
    * ```
    */
-  async getAccountInfo(): Promise<
-    operations['get-account-info']['responses']['200']['content']['application/json']
-  > {
+  async getAccountInfo(): Promise<AccountInfo> {
+    console.warn(
+      'NutrientClient.getAccountInfo() is deprecated; use NutrientClient.getUsage(product) instead.',
+    );
+
     const response = await sendRequest(
       {
         method: 'GET',
         endpoint: '/account/info',
+        data: undefined,
+      },
+      this.options,
+      'json',
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Gets subscription and usage information for a product on the current API key
+   *
+   * @param product - Product slug to query usage for
+   * @returns Promise resolving to the product's subscription and usage counters
+   *
+   * @example
+   * ```typescript
+   * const usage = await client.getUsage('processor');
+   * for (const counter of usage.usage?.counters ?? []) {
+   *   console.log(counter.code, counter.used, '/', counter.total);
+   * }
+   * ```
+   *
+   * Note: counters report `used` and `total` as decimal strings (or `null`),
+   * not numbers — convert explicitly (e.g. `Number(counter.used)`) if you need
+   * to do arithmetic.
+   *
+   * A product your organization is not entitled to rejects in one of two ways,
+   * and which one you get depends on the product — handle both:
+   * - {@link ValidationError} with `statusCode === 404` and `details.error` of
+   *   `'unknown_product'` (unrecognized slug) or `'product_not_found'`.
+   * - {@link AuthenticationError} with `statusCode === 401`. Observed against
+   *   the live API for `viewer`, `accessibility` and `data_extraction`. This
+   *   response is indistinguishable from an invalid API key, so do not treat a
+   *   401 here as proof that the key itself is bad.
+   */
+  async getUsage(product: ProductName): Promise<AccountUsage> {
+    const endpoint: AccountUsageEndpoint = `/account/${product}/usage`;
+
+    const response = await sendRequest(
+      {
+        method: 'GET',
+        endpoint,
         data: undefined,
       },
       this.options,
@@ -290,10 +342,15 @@ export class NutrientClient {
    * @example
    * ```typescript
    * const result = await client.sign('document.pdf', {
-   *   data: {
-   *     signatureType: 'cms',
-   *     flatten: false,
-   *     cadesLevel: 'b-lt'
+   *   flatten: false,
+   *   appearance: {
+   *     mode: 'signatureAndDescription',
+   *     showWatermark: false,
+   *     showSignDate: true
+   *   },
+   *   position: {
+   *     pageIndex: 0,
+   *     rect: [24, 24, 200, 100]
    *   }
    * });
    *
@@ -403,7 +460,8 @@ export class NutrientClient {
    * ```typescript
    * const result = await client.watermarkImage('document.pdf', 'watermark.jpg', {
    *   opacity: 0.5,
-   *   scale: 0.5
+   *   width: { value: 50, unit: '%' },
+   *   height: { value: 50, unit: '%' }
    * });
    *
    * // Access the watermarked PDF buffer
@@ -590,19 +648,9 @@ export class NutrientClient {
    * @example
    * ```typescript
    * const result = await client.extractText('document.pdf');
-   * console.log(result.data);
    *
-   * // Extract text from specific pages
-   * const result = await client.extractText('document.pdf', { start: 0, end: 2 }); // Pages 0, 1, 2
-   *
-   * // Extract text from the last page
-   * const result = await client.extractText('document.pdf', { end: -1 }); // Last page
-   *
-   * // Extract text from the second-to-last page to the end
-   * const result = await client.extractText('document.pdf', { start: -2 }); // Second-to-last and last page
-   *
-   * // Access the extracted text content
-   * const textContent = result.data.pages[0].plainText;
+   * // `pages` is optional on the response — guard before indexing
+   * const textContent = result.data.pages?.[0]?.plainText ?? '';
    *
    * // Process the extracted text
    * const wordCount = textContent.split(/\s+/).length;
@@ -612,6 +660,15 @@ export class NutrientClient {
    * if (textContent.includes('confidential')) {
    *   console.log('Document contains confidential information');
    * }
+   *
+   * // Extract text from specific pages
+   * const firstThreePages = await client.extractText('document.pdf', { start: 0, end: 2 }); // Pages 0, 1, 2
+   *
+   * // Extract text from the last page
+   * const lastPage = await client.extractText('document.pdf', { end: -1 }); // Last page
+   *
+   * // Extract text from the second-to-last page to the end
+   * const lastTwoPages = await client.extractText('document.pdf', { start: -2 }); // Second-to-last and last page
    * ```
    */
   async extractText(
@@ -640,8 +697,8 @@ export class NutrientClient {
    * ```typescript
    * const result = await client.extractTable('document.pdf');
    *
-   * // Access the extracted tables
-   * const tables = result.data.pages[0].tables;
+   * // `pages` is optional on the response — guard before indexing
+   * const tables = result.data.pages?.[0]?.tables;
    *
    * // Process the first table if available
    * if (tables && tables.length > 0) {
@@ -650,22 +707,13 @@ export class NutrientClient {
    *   // Get table dimensions
    *   console.log(`Table has ${firstTable.rows.length} rows and ${firstTable.columns.length} columns`);
    *
-   *   // Access table cells
-   *   for (let i = 0; i < firstTable.rows.length; i++) {
-   *     for (let j = 0; j < firstTable.columns.length; j++) {
-   *       const cell = firstTable.cells.find(cell => cell.rowIndex === i && cell.columnIndex === j);
-   *       const cellContent = cell?.text || '';
-   *       console.log(`Cell [${i}][${j}]: ${cellContent}`);
-   *     }
-   *   }
-   *
    *   // Convert table to CSV
    *   let csv = '';
    *   for (let i = 0; i < firstTable.rows.length; i++) {
-   *     const rowData = [];
+   *     const rowData: string[] = [];
    *     for (let j = 0; j < firstTable.columns.length; j++) {
-   *       const cell = firstTable.cells.find(cell => cell.rowIndex === i && cell.columnIndex === j);
-   *       rowData.push(cell?.text || '');
+   *       const cell = firstTable.cells.find((c) => c.rowIndex === i && c.columnIndex === j);
+   *       rowData.push(cell?.text ?? '');
    *     }
    *     csv += rowData.join(',') + '\n';
    *   }
@@ -673,13 +721,13 @@ export class NutrientClient {
    * }
    *
    * // Extract tables from specific pages
-   * const result = await client.extractTable('document.pdf', { start: 0, end: 2 }); // Pages 0, 1, 2
+   * const firstThreePages = await client.extractTable('document.pdf', { start: 0, end: 2 }); // Pages 0, 1, 2
    *
    * // Extract tables from the last page
-   * const result = await client.extractTable('document.pdf', { end: -1 }); // Last page
+   * const lastPage = await client.extractTable('document.pdf', { end: -1 }); // Last page
    *
    * // Extract tables from the second-to-last page to the end
-   * const result = await client.extractTable('document.pdf', { start: -2 }); // Second-to-last and last page
+   * const lastTwoPages = await client.extractTable('document.pdf', { start: -2 }); // Second-to-last and last page
    * ```
    */
   async extractTable(
@@ -708,39 +756,38 @@ export class NutrientClient {
    * ```typescript
    * const result = await client.extractKeyValuePairs('document.pdf');
    *
-   * // Access the extracted key-value pairs
-   * const kvps = result.data.pages[0].keyValuePairs;
+   * // `pages` is optional on the response — guard before indexing
+   * const kvps = result.data.pages?.[0]?.keyValuePairs;
    *
    * // Process the key-value pairs
    * if (kvps && kvps.length > 0) {
    *   // Iterate through all key-value pairs
    *   kvps.forEach((kvp, index) => {
    *     console.log(`KVP ${index + 1}:`);
-   *     console.log(`  Key: ${kvp.key}`);
-   *     console.log(`  Value: ${kvp.value}`);
+   *     console.log(`  Key: ${kvp.key.content}`);
+   *     console.log(`  Value: ${kvp.value.content}`);
    *     console.log(`  Confidence: ${kvp.confidence}`);
    *   });
    *
-   *   // Create a dictionary from the key-value pairs
-   *   const dictionary = {};
-   *   kvps.forEach(kvp => {
-   *     dictionary[kvp.key] = kvp.value;
+   *   // Create a dictionary keyed by the detected key text
+   *   const dictionary: Record<string, string> = {};
+   *   kvps.forEach((kvp) => {
+   *     dictionary[kvp.key.content] = kvp.value.content;
    *   });
    *
    *   // Look up specific values
    *   console.log(`Invoice Number: ${dictionary['Invoice Number']}`);
    *   console.log(`Date: ${dictionary['Date']}`);
-   *   console.log(`Total Amount: ${dictionary['Total']}`);
    * }
    *
    * // Extract KVPs from specific pages
-   * const result = await client.extractKeyValuePairs('document.pdf', { start: 0, end: 2 }); // Pages 0, 1, 2
+   * const firstThreePages = await client.extractKeyValuePairs('document.pdf', { start: 0, end: 2 }); // Pages 0, 1, 2
    *
    * // Extract KVPs from the last page
-   * const result = await client.extractKeyValuePairs('document.pdf', { end: -1 }); // Last page
+   * const lastPage = await client.extractKeyValuePairs('document.pdf', { end: -1 }); // Last page
    *
    * // Extract KVPs from the second-to-last page to the end
-   * const result = await client.extractKeyValuePairs('document.pdf', { start: -2 }); // Second-to-last and last page
+   * const lastTwoPages = await client.extractKeyValuePairs('document.pdf', { start: -2 }); // Second-to-last and last page
    * ```
    */
   async extractKeyValuePairs(

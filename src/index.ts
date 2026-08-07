@@ -21,6 +21,7 @@ export type {
 
   // Input types
   FileInput,
+  FileInputWithUrl,
   FilePathInput,
   BufferInput,
   Uint8ArrayInput,
@@ -36,6 +37,13 @@ export type {
   OutputTypeMap,
   TypedWorkflowResult,
   WorkflowDryRunResult,
+
+  // Account info / usage
+  AccountInfo,
+  AccountUsage,
+  AccountUsageSubscription,
+  UsageCounter,
+  ProductName,
 
   // Data Extraction (`/extraction/parse`) — hand-composed client-facing types.
   // Schema primitives (Mode, Element and the six subtypes, Bounds, PageRef,

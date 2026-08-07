@@ -9,6 +9,8 @@ on:
 jobs:
   scheduled-integration-tests:
     runs-on: ubuntu-latest
+    env:
+      NUTRIENT_API_KEY: ${{ secrets.NUTRIENT_API_KEY }}
     
     steps:
     - uses: actions/checkout@v4
@@ -23,9 +25,7 @@ jobs:
       run: npm ci
     
     - name: Run all integration tests
-      if: secrets.NUTRIENT_API_KEY != ''
-      env:
-        NUTRIENT_API_KEY: ${{ secrets.NUTRIENT_API_KEY }}
+      if: env.NUTRIENT_API_KEY != ''
       run: |
         echo "Running scheduled integration tests to detect API changes..."
         npm test -- --testPathPatterns="integration\.test\.ts$" --verbose --passWithNoTests
@@ -34,7 +34,7 @@ jobs:
       id: test-run
     
     - name: Skip scheduled tests (no API key)
-      if: secrets.NUTRIENT_API_KEY == ''
+      if: env.NUTRIENT_API_KEY == ''
       run: |
         echo "⏭️ Skipping scheduled integration tests - NUTRIENT_API_KEY not available"
         echo "Configure NUTRIENT_API_KEY secret to enable scheduled API validation"

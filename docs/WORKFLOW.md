@@ -24,10 +24,10 @@ You have several ways of creating a workflow
 const workflow = client.workflow()
 
 // Override the client timeout
-const workflow = client.workflow(60000)
+const workflowWithTimeout = client.workflow(60000)
 
 // Create a workflow without a client
-const workflow = new StagedWorkflowBuilder({
+const standaloneWorkflow = new StagedWorkflowBuilder({
   apiKey: "your-api-key",
 })
 ```
@@ -207,12 +207,6 @@ workflow.applyAction(BuildActions.ocr('english'));
 
 // OCR with multiple languages
 workflow.applyAction(BuildActions.ocr(['english', 'french', 'german']));
-
-// OCR with options (via object syntax)
-workflow.applyAction(BuildActions.ocr({
-  language: 'english',
-  enhanceResolution: true
-}));
 ```
 
 ##### `BuildActions.rotate(rotateBy)`
@@ -300,8 +294,8 @@ workflow.applyAction(BuildActions.watermarkImage('/path/to/logo.png', {
   opacity: 0.3,
   width: { value: 50, unit: '%' },
   height: { value: 50, unit: '%' },
-  top: { value: 10, unit: 'px' },
-  left: { value: 10, unit: 'px' },
+  top: { value: 10, unit: 'pt' },
+  left: { value: 10, unit: 'pt' },
   rotation: 0
 }));
 ```
@@ -349,7 +343,7 @@ Creates an action to add redaction annotations based on text search.
 **Parameters:**
 - `text: string` - Text to search and redact.
 - `options?: object` - Redaction options:
-  - `content?: object` - Visual aspects of the redaction annotation (background color, overlay text, etc.)
+  - `content?: RedactionAnnotation` - Visual aspects of the redaction annotation (fill color, overlay text, overlay text color, etc.). This is the full redaction annotation shape, so `v`, `type`, `pageIndex`, and `bbox` are required alongside the style fields.
 - `strategyOptions?: object` - Redaction strategy options:
   - `includeAnnotations?: boolean` - If true, redaction annotations are created on top of annotations whose content match the provided text (default: true)
   - `caseSensitive?: boolean` - If true, the search will be case sensitive (default: false)
@@ -365,9 +359,21 @@ workflow.applyAction(BuildActions.createRedactionsText('Confidential'));
 workflow.applyAction(BuildActions.createRedactionsText('Confidential', 
   {
     content: {
-      backgroundColor: '#000000',
+      // `v`, `type`, `pageIndex`, and `bbox` are required by the `RedactionAnnotation`
+      // type (inherited from `BaseAnnotation`), but for search-based strategies like
+      // this one, the actual redacted region comes from each text match, not from
+      // this object — only the appearance fields below (fillColor, overlayText,
+      // color) are documented to take effect. The vendored spec doesn't explicitly
+      // confirm pageIndex/bbox are ignored here, so treat these as required
+      // placeholders rather than a real annotation position, and don't rely on a
+      // zero-area box to mean "no redaction".
+      v: 2,
+      type: 'pspdfkit/markup/redaction',
+      pageIndex: 0,
+      bbox: [0, 0, 100, 20],
+      fillColor: '#000000',
       overlayText: 'REDACTED',
-      textColor: '#FFFFFF'
+      color: '#FFFFFF'
     }
   },
   {
@@ -384,7 +390,7 @@ Creates an action to add redaction annotations based on regex pattern matching.
 **Parameters:**
 - `regex: string` - Regex pattern to search and redact.
 - `options?: object` - Redaction options:
-  - `content?: object` - Visual aspects of the redaction annotation (background color, overlay text, etc.)
+  - `content?: RedactionAnnotation` - Visual aspects of the redaction annotation (fill color, overlay text, overlay text color, etc.). This is the full redaction annotation shape, so `v`, `type`, `pageIndex`, and `bbox` are required alongside the style fields.
 - `strategyOptions?: object` - Redaction strategy options:
   - `includeAnnotations?: boolean` - If true, redaction annotations are created on top of annotations whose content match the provided regex (default: true)
   - `caseSensitive?: boolean` - If true, the search will be case sensitive (default: true)
@@ -400,7 +406,13 @@ workflow.applyAction(BuildActions.createRedactionsRegex('[a-zA-Z0-9._%+-]+@[a-zA
 workflow.applyAction(BuildActions.createRedactionsRegex('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}',
   {
     content: {
-      backgroundColor: '#FF0000',
+      // See the note on pageIndex/bbox under `createRedactionsText` above — they're
+      // required by the `RedactionAnnotation` type but not meaningful positions here.
+      v: 2,
+      type: 'pspdfkit/markup/redaction',
+      pageIndex: 0,
+      bbox: [0, 0, 100, 20],
+      fillColor: '#FF0000',
       overlayText: 'EMAIL REDACTED'
     }
   },
@@ -418,7 +430,7 @@ Creates an action to add redaction annotations based on a preset pattern.
 **Parameters:**
 - `preset: string` - Preset pattern to search and redact (e.g. 'email-address', 'credit-card-number', 'social-security-number', etc.)
 - `options?: object` - Redaction options:
-  - `content?: object` - Visual aspects of the redaction annotation (background color, overlay text, etc.)
+  - `content?: RedactionAnnotation` - Visual aspects of the redaction annotation (fill color, overlay text, overlay text color, etc.). This is the full redaction annotation shape, so `v`, `type`, `pageIndex`, and `bbox` are required alongside the style fields.
 - `strategyOptions?: object` - Redaction strategy options:
   - `includeAnnotations?: boolean` - If true, redaction annotations are created on top of annotations whose content match the provided preset (default: true)
   - `start?: number` - The index of the page from where to start the search (default: 0)
@@ -433,7 +445,13 @@ workflow.applyAction(BuildActions.createRedactionsPreset('email-address'));
 workflow.applyAction(BuildActions.createRedactionsPreset('credit-card-number',
   {
     content: {
-      backgroundColor: '#000000',
+      // See the note on pageIndex/bbox under `createRedactionsText` above — they're
+      // required by the `RedactionAnnotation` type but not meaningful positions here.
+      v: 2,
+      type: 'pspdfkit/markup/redaction',
+      pageIndex: 0,
+      bbox: [0, 0, 100, 20],
+      fillColor: '#000000',
       overlayText: 'FINANCIAL DATA'
     }
   },
@@ -475,12 +493,12 @@ Available methods:
 Sets the output format to PDF.
 
 **Parameters:**
-- `options?: object` - Additional options for PDF output, such as compression, encryption, etc.
+- `options?: object` - Additional options for PDF output, such as compression, encryption, etc. Unlike `BuildOutputs.pdf()`, this takes the raw API option names directly (snake_case for passwords/permissions).
   - `options.metadata?: object` - Document metadata properties like title, author.
   - `options.labels?: array` - Custom labels to add to the document for organization and categorization.
-  - `options.userPassword?: string` - Password required to open the document. When set, the PDF will be encrypted.
-  - `options.ownerPassword?: string` - Password required to modify the document. Provides additional security beyond the user password.
-  - `options.userPermissions?: array` - Array of permissions granted to users who open the document with the user password.
+  - `options.user_password?: string` - Password required to open the document. When set, the PDF will be encrypted.
+  - `options.owner_password?: string` - Password required to modify the document. Provides additional security beyond the user password.
+  - `options.user_permissions?: array` - Array of permissions granted to users who open the document with the user password.
     Options include: "printing", "modification", "content-copying", "annotation", "form-filling", etc.
   - `options.optimize?: object` - PDF optimization settings to reduce file size and improve performance.
     - `options.optimize.mrcCompression?: boolean` - When true, applies Mixed Raster Content compression to reduce file size.
@@ -495,8 +513,8 @@ workflow.outputPdf();
 
 // Set output format to PDF with specific options
 workflow.outputPdf({
-  userPassword: 'secret',
-  userPermissions: ["printing"],
+  user_password: 'secret',
+  user_permissions: ["printing"],
   metadata: {
     title: 'Important Document',
     author: 'Document System'
@@ -519,9 +537,9 @@ Sets the output format to PDF/A (archival PDF).
   - `options.rasterization?: boolean` - When true, converts vector graphics to raster images, which can help with compatibility in some cases.
   - `options.metadata?: object` - Document metadata properties like title, author.
   - `options.labels?: array` - Custom labels to add to the document for organization and categorization.
-  - `options.userPassword?: string` - Password required to open the document. When set, the PDF will be encrypted.
-  - `options.ownerPassword?: string` - Password required to modify the document. Provides additional security beyond the user password.
-  - `options.userPermissions?: array` - Array of permissions granted to users who open the document with the user password.
+  - `options.user_password?: string` - Password required to open the document. When set, the PDF will be encrypted.
+  - `options.owner_password?: string` - Password required to modify the document. Provides additional security beyond the user password.
+  - `options.user_permissions?: array` - Array of permissions granted to users who open the document with the user password.
     Options include: "printing", "modification", "content-copying", "annotation", "form-filling", etc.
   - `options.optimize?: object` - PDF optimization settings to reduce file size and improve performance.
     - `options.optimize.mrcCompression?: boolean` - When true, applies Mixed Raster Content compression to reduce file size.
@@ -555,9 +573,9 @@ Sets the output format to PDF/UA (Universal Accessibility).
 - `options?: object` - Additional options for PDF/UA output.
   - `options.metadata?: object` - Document metadata properties like title, author.
   - `options.labels?: array` - Custom labels to add to the document for organization and categorization.
-  - `options.userPassword?: string` - Password required to open the document. When set, the PDF will be encrypted.
-  - `options.ownerPassword?: string` - Password required to modify the document. Provides additional security beyond the user password.
-  - `options.userPermissions?: array` - Array of permissions granted to users who open the document with the user password.
+  - `options.user_password?: string` - Password required to open the document. When set, the PDF will be encrypted.
+  - `options.owner_password?: string` - Password required to modify the document. Provides additional security beyond the user password.
+  - `options.user_permissions?: array` - Array of permissions granted to users who open the document with the user password.
     Options include: "printing", "modification", "content-copying", "annotation", "form-filling", etc.
   - `options.optimize?: object` - PDF optimization settings to reduce file size and improve performance.
     - `options.optimize.mrcCompression?: boolean` - When true, applies Mixed Raster Content compression to reduce file size.
@@ -735,7 +753,7 @@ Executes the workflow and returns the result.
 const result = await workflow.execute();
 
 // Execute with progress tracking
-const result = await workflow.execute({
+const resultWithProgress = await workflow.execute({
   onProgress: (current, total) => {
     console.log(`Processing step ${current} of ${total}`);
   }
@@ -789,10 +807,7 @@ const result = await client
 const result = await client
   .workflow()
   .addFilePart('scanned-document.pdf')
-  .applyAction(BuildActions.ocr({
-    language: 'english',
-    enhanceResolution: true
-  }))
+  .applyAction(BuildActions.ocr('english'))
   .outputPdf()
   .execute();
 ```
@@ -825,12 +840,13 @@ const result = await client
   .addFilePart('document.pdf', { pages: { start: 0, end: 5 } })
   .addFilePart('appendix.pdf')
   .applyActions([
-    BuildActions.ocr({ language: 'english' }),
+    BuildActions.ocr('english'),
     BuildActions.watermarkText('CONFIDENTIAL'),
-    BuildActions.createRedactionsPreset('email-address', 'apply')
+    BuildActions.createRedactionsPreset('email-address'),
+    BuildActions.applyRedactions()
   ])
   .outputPdfA({
-    level: 'pdfa-2b',
+    conformance: 'pdfa-2b',
     optimize: {
       mrcCompression: true
     }
@@ -863,17 +879,20 @@ if (needsWatermark) {
   (workflow as WorkflowWithPartsStage).applyAction(BuildActions.watermarkText('CONFIDENTIAL'));
 }
 
-// Set output format based on user preference
+// Set output format based on user preference, capturing the stage transition —
+// the output methods return a new stage type, so it must be assigned to a
+// variable of that stage rather than discarded like the calls above.
+let outputStage: WorkflowWithOutputStage<'pdf' | 'docx' | 'png'>;
 if (outputFormat === 'pdf') {
-  (workflow as WorkflowWithActionsStage).outputPdf();
+  outputStage = (workflow as WorkflowWithActionsStage).outputPdf();
 } else if (outputFormat === 'docx') {
-  (workflow as WorkflowWithActionsStage).outputOffice('docx');
+  outputStage = (workflow as WorkflowWithActionsStage).outputOffice('docx');
 } else {
-  (workflow as WorkflowWithActionsStage).outputImage('png');
+  outputStage = (workflow as WorkflowWithActionsStage).outputImage('png');
 }
 
 // Execute the workflow
-const result = await (workflow as WorkflowWithOutputStage).execute();
+const result = await outputStage.execute();
 ```
 
 ## Error Handling in Workflows

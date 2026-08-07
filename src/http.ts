@@ -127,17 +127,11 @@ function prepareRequestBody<Method extends Methods, Endpoint extends Endpoints<M
       if (typedConfig.data.graphicImage) {
         appendFileToFormData(formData, 'graphicImage', typedConfig.data.graphicImage);
       }
-      if (typedConfig.data.data) {
-        formData.append('data', JSON.stringify(typedConfig.data.data));
-      } else {
-        formData.append(
-          'data',
-          JSON.stringify({
-            signatureType: 'cades',
-            cadesLevel: 'b-lt',
-          }),
-        );
-      }
+      // The `data` part is mandatory on the multipart /sign endpoint — omitting it
+      // fails with HTTP 400 `$.data must be present`. An empty object satisfies the
+      // requirement without overriding the server's own defaults (flatten: false,
+      // invisible signature), which a client-side default value would.
+      formData.append('data', JSON.stringify(typedConfig.data.data ?? {}));
       axiosConfig.data = formData;
 
       return axiosConfig;

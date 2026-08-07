@@ -44,6 +44,9 @@ const client = new NutrientClient({
 #### Account Methods
 
 ##### getAccountInfo()
+
+> **Deprecated**: The underlying `/account/info` endpoint is deprecated upstream. Use [`getUsage(product)`](#getusageproduct) instead. The method still works and remains supported, but each call now emits a `console.warn` deprecation notice.
+
 Gets account information for the current API key.
 
 **Returns**: `Promise<AccountInfo>` - Promise resolving to account information
@@ -54,6 +57,29 @@ const accountInfo = await client.getAccountInfo();
 // Access subscription information
 console.log(accountInfo.subscriptionType);
 ```
+
+##### getUsage(product)
+Gets subscription and usage information for a single product on the current API key. DWS meters several independent credit systems (processor, viewer, signing workflow, accessibility, data extraction), so a single flat total can no longer represent account usage — this is why `getUsage(product)` replaces `getAccountInfo()`.
+
+**Parameters**:
+- `product: ProductName` - Product to query usage for. One of `'processor'`, `'viewer'`, `'signing_workflow'`, `'accessibility'`, `'data_extraction'`
+
+**Returns**: `Promise<AccountUsage>` - Promise resolving to the product's subscription and usage counters
+
+```typescript
+const usage = await client.getUsage('processor');
+
+console.log(usage.subscription?.type, usage.subscription?.status);
+
+// `used` and `total` are decimal strings (or null), not numbers — convert explicitly
+for (const counter of usage.usage?.counters ?? []) {
+  const used = counter.used == null ? null : Number(counter.used);
+  const total = counter.total == null ? null : Number(counter.total);
+  console.log(`${counter.code}: ${used}/${total} ${counter.unit}`);
+}
+```
+
+Requesting a product your organization isn't entitled to rejects in one of two ways, and which one depends on the product — handle both. Some (e.g. `signing_workflow`) reject with a `ValidationError` whose `statusCode` is `404` and whose `details.error` is `'product_not_found'`; an unrecognized slug gives `'unknown_product'`. Others (observed live for `viewer`, `accessibility` and `data_extraction`) reject with an `AuthenticationError` whose `statusCode` is `401` — a response indistinguishable from an invalid API key, so don't treat it as proof the key is bad.
 
 ##### createToken(params)
 Creates a new authentication token.
@@ -71,7 +97,7 @@ console.log(token.id);
 
 // Store the token for future use
 const tokenId = token.id;
-const tokenValue = token.token;
+const tokenValue = token.accessToken;
 ```
 
 ##### deleteToken(id)
@@ -86,13 +112,14 @@ Deletes an authentication token.
 await client.deleteToken('token-id-123');
 
 // Example in a token management function
-async function revokeUserToken(tokenId) {
+async function revokeUserToken(tokenId: string) {
   try {
     await client.deleteToken(tokenId);
     console.log(`Token ${tokenId} successfully revoked`);
     return true;
   } catch (error) {
-    console.error(`Failed to revoke token: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Failed to revoke token: ${message}`);
     return false;
   }
 }
@@ -112,11 +139,16 @@ Signs a PDF document.
 
 ```typescript
 const result = await client.sign('document.pdf', {
-  signature: {
-    signatureType: 'cms',
-    flatten: false,
-    cadesLevel: 'b-lt',
-  }
+  flatten: false,
+  appearance: {
+    mode: 'signatureAndDescription',
+    showWatermark: false,
+    showSignDate: true,
+  },
+  position: {
+    pageIndex: 0,
+    rect: [24, 24, 200, 100],
+  },
 });
 
 // Access the signed PDF buffer
@@ -342,15 +374,16 @@ const result = await client.extractText('document.pdf', { end: -1 }); // Last pa
 const result = await client.extractText('document.pdf', { start: -2 }); // Second-to-last and last page
 
 // Access the extracted text content
-const textContent = result.data.pages[0].plainText;
+const textContent = result.data.pages?.[0]?.plainText;
+if (textContent !== undefined) {
+  // Process the extracted text
+  const wordCount = textContent.split(/\s+/).length;
+  console.log(`Document contains ${wordCount} words`);
 
-// Process the extracted text
-const wordCount = textContent.split(/\s+/).length;
-console.log(`Document contains ${wordCount} words`);
-
-// Search for specific content
-if (textContent.includes('confidential')) {
-  console.log('Document contains confidential information');
+  // Search for specific content
+  if (textContent.includes('confidential')) {
+    console.log('Document contains confidential information');
+  }
 }
 ```
 
@@ -376,7 +409,7 @@ const result = await client.extractTable('document.pdf', { end: -1 }); // Last p
 const result = await client.extractTable('document.pdf', { start: -2 }); // Second-to-last and last page
 
 // Access the extracted tables
-const tables = result.data.pages[0].tables;
+const tables = result.data.pages?.[0]?.tables;
 
 // Process the first table if available
 if (tables && tables.length > 0) {
@@ -430,22 +463,22 @@ const result = await client.extractKeyValuePairs('document.pdf', { end: -1 }); /
 const result = await client.extractKeyValuePairs('document.pdf', { start: -2 }); // Second-to-last and last page
 
 // Access the extracted key-value pairs
-const kvps = result.data.pages[0].keyValuePairs;
+const kvps = result.data.pages?.[0]?.keyValuePairs;
 
 // Process the key-value pairs
 if (kvps && kvps.length > 0) {
   // Iterate through all key-value pairs
   kvps.forEach((kvp, index) => {
     console.log(`KVP ${index + 1}:`);
-    console.log(`  Key: ${kvp.key}`);
-    console.log(`  Value: ${kvp.value}`);
+    console.log(`  Key: ${kvp.key.content}`);
+    console.log(`  Value: ${kvp.value.content}`);
     console.log(`  Confidence: ${kvp.confidence}`);
   });
 
   // Create a dictionary from the key-value pairs
-  const dictionary = {};
+  const dictionary: Record<string, string> = {};
   kvps.forEach(kvp => {
-    dictionary[kvp.key] = kvp.value;
+    dictionary[kvp.key.content] = kvp.value.content;
   });
 
   // Look up specific values
@@ -769,7 +802,7 @@ const results = await client.split('document.pdf', [
 ]);
 
 // Process each resulting PDF
-for (const result of results) {
+for (const [i, result] of results.entries()) {
   // Access the PDF buffer
   const pdfBuffer = result.buffer;
 

@@ -372,6 +372,21 @@ Reviewers will check for:
 - **Test coverage**: Maintain >90% test coverage
 - **Documentation**: Add JSDoc comments for public APIs
 
+### Generated Types
+
+`src/generated/api-types.ts` and `src/generated/extract-types.ts` are generated from
+the vendored OpenAPI specs (`dws-api-spec.yml` and `dws-data-extraction-spec.yml`) via
+`npm run generate:types` and `npm run generate:types:extract`. Never edit these files by
+hand — CI runs both generate commands in check mode and fails the build if the working
+tree would change.
+
+To change an API type, update the spec (or vendor a newer one from upstream) and
+re-run the relevant generate script, then commit the spec and the regenerated output
+together. Bump the vendored spec when you need endpoints or fields that a newer
+upstream OpenAPI release adds. Full detail on the codegen flags, why they matter, and
+where a hand-written type is legitimate instead lives in
+[`generated-types.md`](generated-types.md).
+
 ### Pre-commit Hooks
 
 Our pre-commit hooks will:
