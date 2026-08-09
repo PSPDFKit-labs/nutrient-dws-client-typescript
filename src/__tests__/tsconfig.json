@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    // TypeScript 6 dropped the implicit pull-in of every `node_modules/@types`
+    // package, so the test globals have to be named explicitly.
+    "types": ["jest", "node"]
+  },
+  // The root config excludes this directory, so both lists are restated rather
+  // than inherited — `extends` would otherwise carry over an `exclude` that
+  // resolves back to the repo root and drops every file here.
+  "include": ["**/*"],
+  "exclude": []
+}

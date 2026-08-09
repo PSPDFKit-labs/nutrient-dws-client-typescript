@@ -111,7 +111,7 @@ describe('Input Processing (Node.js only)', () => {
     it('should process file path', async () => {
       const mockStream = new Readable();
 
-      const mockAccess = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined as never);
+      const mockAccess = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
       const mockCreateReadStream = jest
         .spyOn(fs, 'createReadStream')
         .mockReturnValue(mockStream as fs.ReadStream);
@@ -129,7 +129,7 @@ describe('Input Processing (Node.js only)', () => {
     it('should process structured file-path input', async () => {
       const mockStream = new Readable();
 
-      const mockAccess = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined as never);
+      const mockAccess = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
       const mockCreateReadStream = jest
         .spyOn(fs, 'createReadStream')
         .mockReturnValue(mockStream as fs.ReadStream);
@@ -145,13 +145,13 @@ describe('Input Processing (Node.js only)', () => {
     });
 
     it('should throw error for non-existent file', async () => {
-      jest.spyOn(fs.promises, 'access').mockRejectedValue(new Error('File not found') as never);
+      jest.spyOn(fs.promises, 'access').mockRejectedValue(new Error('File not found'));
 
       await expect(processFileInput('/path/to/nonexistent.pdf')).rejects.toThrow(ValidationError);
     });
 
     it('should throw ValidationError for other errors during processing', async () => {
-      jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined as never);
+      jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
       jest.spyOn(fs, 'createReadStream').mockImplementation(() => {
         throw new Error('Some other error');
       });
@@ -217,11 +217,15 @@ describe('Input Processing (Node.js only)', () => {
     });
 
     it('should return null for BufferInput', () => {
-      expect(getRemoteUrl({ type: 'buffer', buffer: Buffer.from('test'), filename: 'test.pdf' })).toBeNull();
+      expect(
+        getRemoteUrl({ type: 'buffer', buffer: Buffer.from('test'), filename: 'test.pdf' }),
+      ).toBeNull();
     });
 
     it('should return null for Uint8ArrayInput', () => {
-      expect(getRemoteUrl({ type: 'uint8array', data: new Uint8Array([1, 2, 3]), filename: 'test.bin' })).toBeNull();
+      expect(
+        getRemoteUrl({ type: 'uint8array', data: new Uint8Array([1, 2, 3]), filename: 'test.bin' }),
+      ).toBeNull();
     });
   });
 

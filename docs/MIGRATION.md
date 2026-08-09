@@ -133,6 +133,35 @@ const result = await client.sign('document.pdf');
 
 Because `signatureType` and `cadesLevel` no longer exist on the `data` type at all (see 4a), there is no longer a supported way to request CAdES B-LT — or any other specific signature type — through `client.sign()`'s typed `data` parameter. The fields that remain are `flatten`, `formFieldName`, `appearance`, and `position`, none of which control signature type. If your workflow specifically requires CAdES (or another) signature type, consult the current `/sign` API reference for whether and how it's still requestable, and verify your signed output rather than assuming parity with the old default.
 
+### 5) Node.js 18 and 20 are no longer supported — the minimum is now Node.js 22
+
+`engines.node` moves from `>=18.0.0` to `>=22.0.0`. Node.js 18 reached end-of-life in April 2025 and Node.js 20 in April 2026; neither receives security patches, so neither can be tested or supported.
+
+Unlike the four changes above, this one needs **no code change at all**. If you are already on Node.js 22 or later, upgrading is a drop-in replacement.
+
+If you are on Node.js 18 or 20, upgrade your runtime:
+
+```bash
+# Check what you're on
+node --version
+
+# nvm users
+nvm install 22 && nvm use 22
+```
+
+If you cannot upgrade your runtime yet, stay on the last release that supports Node.js 18:
+
+```jsonc
+{
+  "dependencies": {
+    // Receives no further updates, including security fixes.
+    "@nutrient-sdk/dws-client-typescript": "2.1.0"
+  }
+}
+```
+
+Treat that as a short-term measure. `2.1.0` depends on `axios@^1.13.2` and `form-data@^4.0.5`, both of which resolve to releases carrying known high-severity advisories — SSRF via `NO_PROXY` bypass, header injection, authentication bypass through a prototype-pollution gadget, and CRLF injection in multipart bodies. Those fixes ship in `3.0.0` and are not backported. Upgrading Node.js is strongly preferred over pinning.
+
 ## 2.0.0
 
 ### 1) URL inputs now use `FileInputWithUrl`

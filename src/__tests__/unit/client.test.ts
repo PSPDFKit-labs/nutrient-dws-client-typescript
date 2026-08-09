@@ -103,8 +103,9 @@ interface MockWorkflowWithPartsStage extends MockWorkflowInitialStage {
   >;
 }
 
-interface MockWorkflowWithOutputStage<T extends keyof OutputTypeMap | undefined = undefined>
-  extends WorkflowWithOutputStage<T> {
+interface MockWorkflowWithOutputStage<
+  T extends keyof OutputTypeMap | undefined = undefined,
+> extends WorkflowWithOutputStage<T> {
   execute: jest.MockedFunction<
     (options?: WorkflowExecuteOptions) => Promise<TypedWorkflowResult<T>>
   >;
@@ -127,12 +128,10 @@ const mockWorkflow = workflowModule.workflow as jest.MockedFunction<typeof workf
 function createMockWorkflowInstance(
   customMockOutputStage?: MockWorkflowWithOutputStage,
 ): MockWorkflowWithPartsStage & MockWorkflowWithOutputStage {
-  const mockOutputStage =
-    customMockOutputStage ??
-    ({
-      execute: jest.fn().mockResolvedValue({ success: true, output: { buffer: new Uint8Array() } }),
-      dryRun: jest.fn(),
-    } as MockWorkflowWithOutputStage);
+  const mockOutputStage = customMockOutputStage ?? {
+    execute: jest.fn().mockResolvedValue({ success: true, output: { buffer: new Uint8Array() } }),
+    dryRun: jest.fn(),
+  };
 
   const mockWorkflowInstance = {
     addFilePart: jest.fn().mockReturnThis(),
@@ -266,12 +265,12 @@ describe('NutrientClient', () => {
     });
 
     it('should throw ValidationError for empty-string extractApiKey', () => {
-      expect(
-        () => new NutrientClient({ apiKey: 'processor-key', extractApiKey: '' }),
-      ).toThrow(ValidationError);
-      expect(
-        () => new NutrientClient({ apiKey: 'processor-key', extractApiKey: '' }),
-      ).toThrow('Extract API key must not be an empty string');
+      expect(() => new NutrientClient({ apiKey: 'processor-key', extractApiKey: '' })).toThrow(
+        ValidationError,
+      );
+      expect(() => new NutrientClient({ apiKey: 'processor-key', extractApiKey: '' })).toThrow(
+        'Extract API key must not be an empty string',
+      );
     });
   });
 
