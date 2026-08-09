@@ -91,8 +91,8 @@
     "generate:types:extract": "openapi-typescript dws-data-extraction-spec.yml -o src/generated/extract-types.ts"
   },
   "dependencies": {
-    "axios": "^1.13.2",
-    "form-data": "^4.0.5"
+    "axios": "^1.19.0",
+    "form-data": "^4.0.6"
   },
   "overrides": {
     "glob": "^11.0.4",

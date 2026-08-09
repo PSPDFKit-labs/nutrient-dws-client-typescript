@@ -114,6 +114,32 @@ of each.
   `skipLibCheck: false`, consumers who didn't happen to have that package on
   disk got `TS2307: Cannot find module`. `ValueOf<T>` is now defined locally.
 
+### Security
+
+- Updated `axios` from `1.13.2` to `1.19.0`. The previously pinned range
+  resolved to a release carrying 29 open advisories, several rated high: SSRF
+  through `NO_PROXY` hostname and IP-alias bypass
+  ([GHSA-3p68-rc4w-qgx5](https://github.com/advisories/GHSA-3p68-rc4w-qgx5),
+  [GHSA-m7pr-hjqh-92cm](https://github.com/advisories/GHSA-m7pr-hjqh-92cm)),
+  authentication bypass via a prototype-pollution gadget in the
+  `validateStatus` merge strategy
+  ([GHSA-w9j2-pvgh-6h63](https://github.com/advisories/GHSA-w9j2-pvgh-6h63)),
+  header injection
+  ([GHSA-6chq-wfr3-2hj9](https://github.com/advisories/GHSA-6chq-wfr3-2hj9)),
+  CRLF injection in `multipart/form-data` bodies
+  ([GHSA-445q-vr5w-6q77](https://github.com/advisories/GHSA-445q-vr5w-6q77)),
+  and `Proxy-Authorization` credential leakage across an HTTP-to-HTTPS
+  redirect
+  ([GHSA-p92q-9vqr-4j8v](https://github.com/advisories/GHSA-p92q-9vqr-4j8v)).
+- Updated `form-data` from `4.0.5` to `4.0.6`, fixing CRLF injection via
+  unescaped multipart field names and filenames
+  ([GHSA-hmw2-7cc7-3qxx](https://github.com/advisories/GHSA-hmw2-7cc7-3qxx)).
+
+Both are runtime dependencies, so every consumer of this library inherits
+them. Every file upload this client performs is built with `form-data` and
+dispatched through `axios`, so the multipart and header injection paths were
+reachable from ordinary use. Neither update changes any API.
+
 ## [2.1.0] - 2026-05-29
 
 ### Added
