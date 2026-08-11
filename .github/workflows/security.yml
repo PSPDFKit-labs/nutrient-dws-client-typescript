@@ -71,12 +71,3 @@ jobs:
         echo "🔍 Running npm audit..."
         npm audit --production --audit-level=moderate || echo "⚠️ Audit found issues but continuing..."
       continue-on-error: true
-
-    - name: Run Snyk Security Scan
-      uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
-      continue-on-error: true
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high
-      if: env.SNYK_TOKEN != ''

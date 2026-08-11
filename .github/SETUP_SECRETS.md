@@ -14,9 +14,6 @@ Your Nutrient DWS Processor API key for running integration tests.
 ### 2. NPM_TOKEN (Optional)
 Required only if you want to automatically publish to NPM.
 
-### 3. SNYK_TOKEN (Optional)
-Required only if you want to run Snyk security scans.
-
 ## How to Add Secrets
 
 1. Go to your repository on GitHub
