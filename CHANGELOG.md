@@ -78,9 +78,18 @@ server's contract; the fifth raises the minimum Node.js version to 22. See
   removes the flag, and it was already redundant under flat config — file
   coverage is unchanged at 31 files.
 - Updated GitHub Actions: `checkout`, `setup-node` and `upload-artifact` to
-  v7, `github-script` to v9, and `gitleaks-action` v2 → v3. The
-  `gitleaks-action` bump is not optional — v2 runs on the Node 20 Actions
-  runtime, which GitHub removes from hosted runners on 2026-09-16.
+  v7, and `github-script` to v9. Every action is now pinned to a commit SHA
+  rather than a tag, with the release recorded in a trailing comment. A tag
+  is a mutable pointer, so anyone who can move it can run their code with
+  this repository's workflow token.
+- Removed the Snyk and Gitleaks steps from the security workflow. Neither
+  had ever run: Snyk was gated behind a `SNYK_TOKEN` secret that does not
+  exist, and Gitleaks needs an organization licence key that does not
+  exist either. Both were also `continue-on-error`, so neither could fail
+  the job. Credential detection now comes from GitHub secret scanning and
+  push protection, which block a secret before it lands rather than
+  reporting it afterwards. The workflow keeps its own check for the
+  Nutrient-specific key formats, which are not partner patterns.
 - `npm run typecheck` now also typechecks the test suite. Test files were
   excluded from the only project `tsc --noEmit` ran against, so they were
   never typechecked outside of `ts-jest` at test time.
