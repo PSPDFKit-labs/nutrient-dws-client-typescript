@@ -8,8 +8,9 @@ jest.mock('../../builders/workflow');
 
 // Mock interfaces for workflow stages
 // @ts-expect-error Mocked type
-interface MockWorkflowBuilder<TOutput extends keyof OutputTypeMap | undefined = undefined>
-  extends WorkflowBuilder<TOutput> {
+interface MockWorkflowBuilder<
+  TOutput extends keyof OutputTypeMap | undefined = undefined,
+> extends WorkflowBuilder<TOutput> {
   addFilePart: jest.MockedFunction<WorkflowBuilder<TOutput>['addFilePart']>;
   addHtmlPart: jest.MockedFunction<WorkflowBuilder<TOutput>['addHtmlPart']>;
   addNewPage: jest.MockedFunction<WorkflowBuilder<TOutput>['addNewPage']>;

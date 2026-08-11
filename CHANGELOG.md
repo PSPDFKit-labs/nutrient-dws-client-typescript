@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0] - 2026-08-03
 
-This release has four breaking changes. Three originate upstream in the DWS
+This release has five breaking changes. Three originate upstream in the DWS
 API spec bump from `1.10.0` to `1.15.1`; the fourth (the `sign()` default
 removal, below) is a deliberate library change to stop overriding the
-server's contract. See `docs/MIGRATION.md` for worked before/after examples
-of each.
+server's contract; the fifth raises the minimum Node.js version to 22. See
+`docs/MIGRATION.md` for worked before/after examples of each.
 
 ### Added
 
@@ -39,10 +39,51 @@ of each.
 
 ### Changed
 
+- **Breaking:** The minimum supported Node.js version is now `22.0.0`, raised
+  from `18.0.0`. Node.js 18 reached end-of-life in April 2025 and Node.js 20
+  in April 2026; neither receives security patches, so neither can be tested
+  or supported. CI now runs against Node.js 22 and 24. There is no API
+  change — if you are already on Node.js 22 or later, nothing in your code
+  needs to change. See `docs/MIGRATION.md`.
 - Updated the vendored OpenAPI spec from `1.10.0` to `1.15.1`.
 - Type generation now passes `--empty-objects-unknown` and
   `--default-non-nullable=false` to `openapi-typescript`, so the generated
   types are reproducible directly from the spec.
+- Updated the development toolchain: ESLint `9.39.2` → `10.8.1` (with
+  `@eslint/js` `9.39.2` → `10.0.1`), `globals` `16.5.0` → `17.9.0`,
+  `@types/node` `24.10.7` → `26.2.0`, `typescript-eslint` `8.53.0` →
+  `8.66.0`, `jest` `30.2.0` → `30.4.2`, `ts-jest` `29.4.6` → `29.4.12`,
+  `prettier` `3.7.4` → `3.9.6`, `openapi-typescript` `7.10.1` → `7.13.0`,
+  and six others to their latest in-range releases. `openapi-typescript`
+  `7.13.0` regenerates both files in `src/generated/` byte-for-byte
+  identically, so no generated type changed.
+- Updated TypeScript from `5.9.3` to `6.0.3`. TypeScript 7 is not yet
+  reachable — `ts-jest@29.4.12` requires `typescript <7` and
+  `typescript-eslint@8.66.0` requires `<6.1.0` — but 6.0 is the supported
+  bridge release toward it, and staying on 5.9 meant sitting on compiler
+  options that 7.0 removes outright. Three changes came with it:
+  - `moduleResolution` moves from `node` (node10) to `bundler`. TypeScript 6
+    deprecates node10 and TypeScript 7 drops it. `bundler` matches how this
+    package is actually built (tsup/esbuild bundles `src/`, and imports are
+    extensionless); `node16`/`nodenext` would have required rewriting every
+    relative import to carry a `.js` extension.
+  - TypeScript 6 no longer implicitly pulls in every `node_modules/@types`
+    package, so the test project now names `jest` and `node` explicitly.
+  - `openapi-typescript@7.13.0` declares a `typescript: ^5.x` peer, which
+    makes `npm ci` fail outright on TypeScript 6. A scoped `overrides` entry
+    relaxes that single peer. The tool itself is unaffected: it regenerates
+    both files in `src/generated/` byte-for-byte identically under 6.0.3,
+    and CI's drift job re-checks that on every run.
+- The `lint` and `lint:fix` scripts no longer pass `--ext .ts`. ESLint 10
+  removes the flag, and it was already redundant under flat config — file
+  coverage is unchanged at 31 files.
+- Updated GitHub Actions: `checkout`, `setup-node` and `upload-artifact` to
+  v7, `github-script` to v9, and `gitleaks-action` v2 → v3. The
+  `gitleaks-action` bump is not optional — v2 runs on the Node 20 Actions
+  runtime, which GitHub removes from hosted runners on 2026-09-16.
+- `npm run typecheck` now also typechecks the test suite. Test files were
+  excluded from the only project `tsc --noEmit` ran against, so they were
+  never typechecked outside of `ts-jest` at test time.
 - **Known limitation:** 1.15.1 widened `WatermarkDimension` (the type of
   `width`/`height`/`top`/`right`/`bottom`/`left` on watermark actions) from
   `{ value, unit }` to `number | string | { value, unit }`, adding a scalar
@@ -77,6 +118,14 @@ of each.
 
 ### Removed
 
+- Removed the Codecov integration. CI still runs the unit tests with
+  `--coverage`, so the thresholds in `jest.config.mjs` (70% branches and
+  functions, 75% lines and statements) continue to gate the build — coverage
+  is simply no longer uploaded to a third-party service.
+- Removed `tsconfig.test.json`. It existed only to give type-aware linting a
+  project containing the tests; that role now belongs to
+  `src/__tests__/tsconfig.json`, which typescript-eslint's project service
+  discovers on its own as the nearest config to those files.
 - **Breaking:** Removed `apiKeys` from the `getAccountInfo()` response type,
   following its removal from the upstream `/account/info` endpoint. If you
   read `accountInfo.apiKeys`, use `createToken()` / `deleteToken()` to manage
@@ -113,6 +162,10 @@ of each.
   the import statement was emitted into the public `.d.ts`. Under
   `skipLibCheck: false`, consumers who didn't happen to have that package on
   disk got `TS2307: Cannot find module`. `ValueOf<T>` is now defined locally.
+- Removed nine redundant type assertions that newer `typescript-eslint`
+  releases correctly flag as unnecessary, in `src/builders/workflow.ts` and
+  two test files, and collapsed one `if (!config || !config.type)` guard to
+  `if (!config?.type)`. All are semantics-preserving.
 
 ### Security
 

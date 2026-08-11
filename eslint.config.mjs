@@ -50,7 +50,8 @@ export default defineConfig([
       sourceType: 'module',
 
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.test.json'],
+        projectService: true,
+        tsconfigRootDir: __dirname,
       },
     },
 

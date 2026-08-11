@@ -337,7 +337,7 @@ Reviewers will check for:
 
 1. **Setup Development Environment**
    ```bash
-   # Ensure you have Node.js 18.0.0 or higher installed
+   # Ensure you have Node.js 22.0.0 or higher installed
    node --version
 
    # Install dependencies

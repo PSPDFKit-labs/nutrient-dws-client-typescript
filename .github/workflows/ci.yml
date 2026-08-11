@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Use Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
-        node-version: '20.x'
+        node-version: '22.x'
         cache: 'npm'
 
     - name: Install dependencies
@@ -32,12 +32,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Use Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
-        node-version: '20.x'
+        node-version: '22.x'
         cache: 'npm'
 
     - name: Install dependencies
@@ -68,14 +68,14 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [22.x, 24.x]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -86,26 +86,17 @@ jobs:
     - name: Run unit tests with coverage
       run: npm test -- --coverage --testPathPatterns='^((?!integration).)*$'
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-
-
   build:
     runs-on: ubuntu-latest
     needs: [lint-and-type-check, generated-types-drift, unit-tests]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Use Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
-        node-version: '20.x'
+        node-version: '22.x'
         cache: 'npm'
 
     - name: Install dependencies

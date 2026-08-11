@@ -56,7 +56,7 @@ export class WorkflowBuilder<
 
     // Handle local files - register in assets map
     const assetKey = `asset_${this.assetIndex++}`;
-    this.assets.set(assetKey, asset as FileInput);
+    this.assets.set(assetKey, asset);
 
     return assetKey;
   }
@@ -407,7 +407,7 @@ export class WorkflowBuilder<
       options?.onProgress?.(this.currentStep, 3);
 
       const outputConfig = this.buildInstructions.output;
-      if (!outputConfig || !outputConfig.type) {
+      if (!outputConfig?.type) {
         throw new Error('Output configuration is required');
       }
 
@@ -416,7 +416,7 @@ export class WorkflowBuilder<
       let responseType: ResponseType = 'arraybuffer';
       if (outputConfig.type === 'json-content') {
         responseType = 'json';
-      } else if (['html', 'markdown'].includes(outputConfig.type as string)) {
+      } else if (['html', 'markdown'].includes(outputConfig.type)) {
         responseType = 'text';
       }
 
@@ -439,7 +439,7 @@ export class WorkflowBuilder<
         } as unknown as TOutput extends keyof OutputTypeMap
           ? OutputTypeMap[TOutput]
           : WorkflowOutput;
-      } else if (['html', 'markdown'].includes(outputConfig.type as string)) {
+      } else if (['html', 'markdown'].includes(outputConfig.type)) {
         const { mimeType, filename } = BuildOutputs.getMimeTypeForOutput(outputConfig);
 
         result.success = true;
