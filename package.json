@@ -81,6 +81,7 @@
     "test:unit": "jest --testPathPatterns=\"^((?!integration).)*$\"",
     "test:integration": "jest --testPathPatterns=integration.test",
     "test:integration:verbose": "jest --testPathPatterns=integration.test --verbose",
+    "test:smoke": "node tools/smoke-test.mjs",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.ts\"",
