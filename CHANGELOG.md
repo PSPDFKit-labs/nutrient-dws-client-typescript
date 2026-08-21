@@ -78,9 +78,7 @@ server's contract; the fifth raises the minimum Node.js version to 22. See
   removes the flag, and it was already redundant under flat config — file
   coverage is unchanged at 31 files.
 - Updated GitHub Actions: `checkout`, `setup-node` and `upload-artifact` to
-  v7, `github-script` to v9, and `gitleaks-action` v2 → v3. The
-  `gitleaks-action` bump is not optional — v2 runs on the Node 20 Actions
-  runtime, which GitHub removes from hosted runners on 2026-09-16.
+  v7, and `github-script` to v9.
 - `npm run typecheck` now also typechecks the test suite. Test files were
   excluded from the only project `tsc --noEmit` ran against, so they were
   never typechecked outside of `ts-jest` at test time.

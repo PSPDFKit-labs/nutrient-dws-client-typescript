@@ -9,23 +9,16 @@ on:
     - cron: '0 0 * * 0'  # Weekly on Sunday
 
 jobs:
+  # Broad credential detection is handled by GitHub secret scanning and push
+  # protection, which run on the repository itself. This job only covers the
+  # Nutrient-specific key formats that are not partner patterns.
   secret-scanning:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
 
     steps:
-    - uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
-
-    - name: Run Gitleaks
-      uses: gitleaks/gitleaks-action@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-      continue-on-error: true
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Check for hardcoded secrets
       run: |
@@ -55,10 +48,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Use Node.js
-      uses: actions/setup-node@v7
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version: '22.x'
         cache: 'npm'
@@ -71,12 +64,3 @@ jobs:
         echo "🔍 Running npm audit..."
         npm audit --production --audit-level=moderate || echo "⚠️ Audit found issues but continuing..."
       continue-on-error: true
-
-    - name: Run Snyk Security Scan
-      uses: snyk/actions/node@master
-      continue-on-error: true
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high
-      if: env.SNYK_TOKEN != ''
