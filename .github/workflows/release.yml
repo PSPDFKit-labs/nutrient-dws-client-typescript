@@ -54,6 +54,9 @@ jobs:
     - name: Run type checking
       run: npm run typecheck
 
+    - name: Run tests
+      run: npm run test:unit
+
     - name: Build
       run: npm run build
 
@@ -98,10 +101,10 @@ jobs:
           echo "bin    ok  $b"
         done
 
-    # prepublishOnly runs the build and the test suite. The integration tests
-    # skip themselves without NUTRIENT_API_KEY, so no key is needed here.
-    # access is already public via publishConfig, so --access is not repeated.
+    # prepublishOnly re-runs the build and the full test suite inside npm
+    # publish. The integration tests skip themselves without NUTRIENT_API_KEY,
+    # so no key is needed here.
     - name: Publish to npm
-      run: npm publish --provenance
+      run: npm publish --access public --provenance
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
