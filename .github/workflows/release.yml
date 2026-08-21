@@ -22,7 +22,8 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
         cache: 'npm'
 
-    # Node 22 ships npm 10. Trusted publishing needs npm >= 11.5.1.
+    # Pin the tool that uploads the tarball rather than taking whichever npm
+    # the runner image happens to ship.
     - name: Install npm
       run: npm install -g npm@12.0.2
 
@@ -99,5 +100,8 @@ jobs:
 
     # prepublishOnly runs the build and the test suite. The integration tests
     # skip themselves without NUTRIENT_API_KEY, so no key is needed here.
+    # access is already public via publishConfig, so --access is not repeated.
     - name: Publish to npm
-      run: npm publish
+      run: npm publish --provenance
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
