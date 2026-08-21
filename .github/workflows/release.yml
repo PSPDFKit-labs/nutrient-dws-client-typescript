@@ -53,6 +53,50 @@ jobs:
     - name: Run type checking
       run: npm run typecheck
 
+    - name: Build
+      run: npm run build
+
+    # npm pack does not run prepublishOnly, hence the explicit build above.
+    # This is the only step that exercises the package the way a consumer gets
+    # it. The exports map, the files list and the bin entries are invisible to
+    # the test suite, which imports from src/.
+    - name: Smoke-test the packed tarball
+      run: |
+        set -euo pipefail
+        name="$(npm pack --pack-destination "$RUNNER_TEMP" --silent)"
+        tarball="$RUNNER_TEMP/$name"
+        export EXPECTED="$(node -p "require('./package.json').version")"
+        export BINS="$(node -p "Object.keys(require('./package.json').bin).join(' ')")"
+
+        work="$(mktemp -d)"
+        cd "$work"
+        npm init -y > /dev/null
+        npm install --no-audit --no-fund "$tarball"
+
+        node -e "
+          const m = require('@nutrient-sdk/dws-client-typescript');
+          if (typeof m.NutrientClient !== 'function') throw new Error('CJS: NutrientClient is not exported');
+          new m.NutrientClient({ apiKey: 'smoke-test-key' });
+          if (m.getLibraryVersion() !== process.env.EXPECTED) throw new Error('CJS: version is ' + m.getLibraryVersion() + ', expected ' + process.env.EXPECTED);
+          console.log('CJS    ok  ' + m.getLibraryVersion());
+        "
+
+        node --input-type=module -e "
+          import { NutrientClient, getLibraryVersion } from '@nutrient-sdk/dws-client-typescript';
+          if (typeof NutrientClient !== 'function') throw new Error('ESM: NutrientClient is not exported');
+          new NutrientClient({ apiKey: 'smoke-test-key' });
+          if (getLibraryVersion() !== process.env.EXPECTED) throw new Error('ESM: version is ' + getLibraryVersion() + ', expected ' + process.env.EXPECTED);
+          console.log('ESM    ok  ' + getLibraryVersion());
+        "
+
+        test -f node_modules/@nutrient-sdk/dws-client-typescript/dist/index.d.ts
+        echo "types  ok"
+
+        for b in $BINS; do
+          test -x "node_modules/.bin/$b" || { echo "::error::bin $b is declared in package.json but missing from the tarball"; exit 1; }
+          echo "bin    ok  $b"
+        done
+
     # prepublishOnly runs the build and the test suite. The integration tests
     # skip themselves without NUTRIENT_API_KEY, so no key is needed here.
     - name: Publish to npm
