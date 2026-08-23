@@ -34,13 +34,13 @@
     "windsurf",
     "context7"
   ],
-  "homepage": "https://github.com/pspdfkit-labs/nutrient-dws-client-typescript#readme",
+  "homepage": "https://github.com/PSPDFKit-labs/nutrient-dws-client-typescript#readme",
   "bugs": {
-    "url": "https://github.com/pspdfkit-labs/nutrient-dws-client-typescript/issues"
+    "url": "https://github.com/PSPDFKit-labs/nutrient-dws-client-typescript/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pspdfkit-labs/nutrient-dws-client-typescript.git"
+    "url": "git+https://github.com/PSPDFKit-labs/nutrient-dws-client-typescript.git"
   },
   "license": "MIT",
   "author": "Nutrient (https://www.nutrient.io)",
