@@ -39,7 +39,10 @@ try {
       stdio: ['ignore', 'pipe', 'inherit'],
     }),
   );
-  const tarball = join(stage, packed[0].filename);
+  // npm <11 emits an array of pack results; npm >=12 emits an object keyed by
+  // package name. Support both.
+  const packResult = Array.isArray(packed) ? packed[0] : packed[name];
+  const tarball = join(stage, packResult.filename);
 
   execFileSync(NPM, ['init', '-y'], { cwd: work, stdio: 'ignore' });
   execFileSync(NPM, ['install', '--no-audit', '--no-fund', tarball], {
