@@ -8,7 +8,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,6 +85,55 @@ try {
     throw new Error(`types entry is missing from the tarball: ${types}`);
   }
   console.log('types  ok');
+
+  // Type-check a consumer against the installed package under each module
+  // resolution mode TypeScript users run. Unresolvable declaration imports do
+  // not fail loudly: the exports silently become `any`. The @ts-expect-error
+  // lines catch that, because they only hold when the real types are present.
+  const tsc = join(root, 'node_modules', 'typescript', 'bin', 'tsc');
+  const consumer = `import { NutrientClient, ValidationError } from ${JSON.stringify(name)};
+const client = new NutrientClient({ apiKey: 'smoke-test-key' });
+// @ts-expect-error NutrientClient must not resolve to any.
+export const notAny: symbol = client;
+// @ts-expect-error ValidationError must not resolve to any.
+export const notAnyError: symbol = new ValidationError('x');
+export const run = async () => {
+  const result = await client.parse('invoice.pdf', { mode: 'understand' });
+  return result.output.elements?.filter((el) => el.type === 'table');
+};
+`;
+  writeFileSync(join(work, 'consumer.mts'), consumer);
+  writeFileSync(join(work, 'consumer.cts'), consumer);
+  const typeChecks = [
+    ['nodenext', 'nodenext', ['consumer.mts', 'consumer.cts']],
+    ['node16', 'node16', ['consumer.mts', 'consumer.cts']],
+    ['esnext', 'bundler', ['consumer.mts']],
+  ];
+  for (const [module, moduleResolution, files] of typeChecks) {
+    execFileSync(
+      'node',
+      [
+        tsc,
+        '--noEmit',
+        '--strict',
+        '--skipLibCheck',
+        'false',
+        '--target',
+        'es2022',
+        '--module',
+        module,
+        '--moduleResolution',
+        moduleResolution,
+        '--typeRoots',
+        join(root, 'node_modules', '@types'),
+        '--types',
+        'node',
+        ...files,
+      ],
+      { cwd: work, stdio: 'inherit' },
+    );
+    console.log(`tsc    ok  ${moduleResolution} (${files.join(', ')})`);
+  }
 
   for (const command of Object.keys(pkg.bin ?? {})) {
     if (!existsSync(join(work, 'node_modules', '.bin', command))) {

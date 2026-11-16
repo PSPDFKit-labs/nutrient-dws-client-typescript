@@ -111,3 +111,7 @@ jobs:
         test -f dist/index.js
         test -f dist/index.cjs
         test -f dist/index.d.ts
+        test -f dist/index.d.cts
+
+    - name: Smoke-test the packed tarball
+      run: npm run test:smoke
