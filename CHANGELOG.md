@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Type declarations now resolve under `moduleResolution: node16` and
+  `nodenext`. The package previously shipped per-file `.d.ts` files with
+  extensionless relative imports, which those modes cannot resolve, so every
+  export silently became `any`. Declarations are now bundled into
+  `dist/index.d.ts` (ESM) and `dist/index.d.cts` (CommonJS), and the `exports`
+  map points each condition at its own declaration file.
+
 ## [3.0.0] - 2026-08-03
 
 This release has five breaking changes. Three originate upstream in the DWS
